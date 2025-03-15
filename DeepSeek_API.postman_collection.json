@@ -1,0 +1,214 @@
+{
+    "info": {
+        "name": "DeepSeek Express API (Local Model)",
+        "description": "A collection of requests for testing the DeepSeek Express API with a locally running DeepSeek model at http://127.0.0.1:11434/",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Generate Code",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"prompt\": \"Create a function that calculates the Fibonacci sequence\",\n  \"language\": \"javascript\",\n  \"comments\": true,\n  \"maxTokens\": 2048\n}"
+                },
+                "url": {
+                    "raw": "http://localhost:3000/api/generate/code",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "3000",
+                    "path": [
+                        "api",
+                        "generate",
+                        "code"
+                    ]
+                },
+                "description": "Generate code based on a prompt"
+            },
+            "response": []
+        },
+        {
+            "name": "Validate Content",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"content\": \"Artificial intelligence (AI) is intelligence demonstrated by machines, as opposed to natural intelligence displayed by animals including humans. AI research has been defined as the field of study of intelligent agents, which refers to any system that perceives its environment and takes actions that maximize its chance of achieving its goals.\",\n  \"criteria\": [\"accuracy\", \"clarity\", \"coherence\"],\n  \"detailed\": true\n}"
+                },
+                "url": {
+                    "raw": "http://localhost:3000/api/validate/content",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "3000",
+                    "path": [
+                        "api",
+                        "validate",
+                        "content"
+                    ]
+                },
+                "description": "Validate and review content"
+            },
+            "response": []
+        },
+        {
+            "name": "Research Topic",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"topic\": \"Artificial Intelligence in Healthcare\",\n  \"depth\": \"intermediate\",\n  \"format\": \"detailed\"\n}"
+                },
+                "url": {
+                    "raw": "http://localhost:3000/api/research/topic",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "3000",
+                    "path": [
+                        "api",
+                        "research",
+                        "topic"
+                    ]
+                },
+                "description": "Perform research on a topic"
+            },
+            "response": []
+        },
+        {
+            "name": "Summarize Content",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"content\": \"Artificial intelligence (AI) is intelligence demonstrated by machines, as opposed to natural intelligence displayed by animals including humans. AI research has been defined as the field of study of intelligent agents, which refers to any system that perceives its environment and takes actions that maximize its chance of achieving its goals. The term 'artificial intelligence' was first used in 1956, and has been used in various contexts since then. Today, AI is a broad field that encompasses machine learning, deep learning, natural language processing, computer vision, and many other subfields. AI applications include voice assistants, recommendation systems, autonomous vehicles, and medical diagnosis tools.\",\n  \"length\": \"medium\",\n  \"style\": \"paragraph\"\n}"
+                },
+                "url": {
+                    "raw": "http://localhost:3000/api/summarize",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "3000",
+                    "path": [
+                        "api",
+                        "summarize"
+                    ]
+                },
+                "description": "Summarize content"
+            },
+            "response": []
+        },
+        {
+            "name": "Derive Insights",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"content\": \"The global AI market was valued at $62.35 billion in 2020 and is expected to grow at a compound annual growth rate (CAGR) of 40.2% from 2021 to 2028. The growth is attributed to the increasing adoption of AI technologies across various industries, including healthcare, automotive, retail, and finance. In healthcare, AI is being used for medical diagnosis, drug discovery, and personalized medicine. In the automotive industry, AI is driving the development of autonomous vehicles. Retail companies are using AI for customer service, inventory management, and personalized marketing. Financial institutions are leveraging AI for fraud detection, risk assessment, and algorithmic trading.\",\n  \"perspective\": \"analytical\",\n  \"focusAreas\": [\"trends\", \"opportunities\"]\n}"
+                },
+                "url": {
+                    "raw": "http://localhost:3000/api/derive/insights",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "3000",
+                    "path": [
+                        "api",
+                        "derive",
+                        "insights"
+                    ]
+                },
+                "description": "Derive insights from content"
+            },
+            "response": []
+        },
+        {
+            "name": "Generate SVG",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"description\": \"A mountain landscape with a sunset\",\n  \"style\": \"minimal\",\n  \"size\": {\n    \"width\": 300,\n    \"height\": 200\n  },\n  \"colors\": [\"#ff7700\", \"#0077ff\"]\n}"
+                },
+                "url": {
+                    "raw": "http://localhost:3000/api/generate/svg",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "3000",
+                    "path": [
+                        "api",
+                        "generate",
+                        "svg"
+                    ]
+                },
+                "description": "Generate SVG based on description"
+            },
+            "response": []
+        },
+        {
+            "name": "Health Check",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "http://localhost:3000/health",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "3000",
+                    "path": [
+                        "health"
+                    ]
+                },
+                "description": "Check if the API is running"
+            },
+            "response": []
+        }
+    ]
+}

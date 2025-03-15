@@ -1,0 +1,6 @@
+
+# run the server
+npm run dev
+
+# test local model
+npm run test:local-model

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const deepseekService = require('../services/deepseek.service');
+const genAIService = require('../services/gen-ai.service');
 const { validate, schemas } = require('../middleware/validator');
 
 /**
@@ -8,7 +8,7 @@ const { validate, schemas } = require('../middleware/validator');
  * /generate/code:
  *   post:
  *     summary: Generate code based on a prompt
- *     description: Uses the DeepSeek model to generate code based on the provided requirements
+ *     description: Uses the DeepSeek model to generate code based on the provided requirements. Returns only the actual code without explanatory text or <think> tags.
  *     tags: [Code Generation]
  *     requestBody:
  *       required: true
@@ -34,7 +34,7 @@ router.post('/', validate(schemas.codeGeneration), async (req, res, next) => {
   try {
     const { prompt, language, comments, maxTokens } = req.body;
     
-    const result = await deepseekService.generateCode({
+    const result = await genAIService.generateCode({
       prompt,
       language,
       comments,

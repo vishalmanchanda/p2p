@@ -66,6 +66,56 @@ const schemas = {
       height: Joi.number().integer().min(16).max(2000).default(300)
     }).default({ width: 300, height: 300 }),
     colors: Joi.array().items(Joi.string()).default([])
+  }),
+
+  // Prototype generation schema
+  prototypeGeneration: Joi.object({
+    scenario: Joi.string().required().min(10).max(1000)
+      .description('Detailed description of the scenario for the prototype'),
+    name: Joi.string().required().min(3).max(50)
+      .description('Name for the prototype (will be used for the directory name)'),
+    features: Joi.array().items(Joi.string()).default([])
+      .description('Specific features to include in the prototype')
+  }),
+  
+  // Prototype builder schema for section-based generation
+  prototypeBuilder: Joi.object({
+    scenario: Joi.string().required().min(10).max(1000)
+      .description('Detailed description of the scenario for the prototype'),
+    name: Joi.string().required().min(3).max(50)
+      .description('Name for the prototype (will be used for the directory name)'),
+    sections: Joi.array().items(
+      Joi.object({
+        id: Joi.string().required().pattern(/^[a-z0-9-]+$/)
+          .description('Unique identifier for the section (used in the HTML)'),
+        type: Joi.string().required()
+          .description('Type of section (e.g., header, main, features, footer)'),
+        description: Joi.string().required().min(10).max(500)
+          .description('Detailed description of what this section should contain')
+      })
+    ).min(1).required()
+      .description('Array of sections to generate for the prototype'),
+    features: Joi.array().items(Joi.string()).default([])
+      .description('Specific features to include in the prototype')
+  }),
+  
+  // Section generation schema
+  sectionGeneration: Joi.object({
+    scenario: Joi.string().required().min(10).max(1000)
+      .description('Detailed description of the scenario for the prototype'),
+    name: Joi.string().required().min(3).max(50)
+      .description('Name for the prototype (will be used for the directory name)'),
+    section: Joi.object({
+      id: Joi.string().required().pattern(/^[a-z0-9-]+$/)
+        .description('Unique identifier for the section (used in the HTML)'),
+      type: Joi.string().required()
+        .description('Type of section (e.g., header, main, features, footer)'),
+      description: Joi.string().required().min(10).max(500)
+        .description('Detailed description of what this section should contain')
+    }).required()
+      .description('Section configuration to generate'),
+    features: Joi.array().items(Joi.string()).default([])
+      .description('Specific features to include in the section')
   })
 };
 

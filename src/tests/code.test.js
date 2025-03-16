@@ -1,6 +1,6 @@
 const request = require('supertest');
 const app = require('../index');
-const deepseekService = require('../services/deepseek.service');
+const deepseekService = require('../services/gen-ai.service');
 
 // Mock the deepseekService
 jest.mock('../services/deepseek.service');

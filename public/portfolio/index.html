@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Designer Portfolio</title>
+    
+    <!-- CDN Links -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="fixed w-full bg-white shadow-lg z-50" style="top: 0;">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex-shrink-0 flex items-center">
+                    <img class="h-8 w-auto" src="logo.png" alt="Designer's Logo">
+                </div>
+                
+                <!-- Desktop Menu -->
+                <div class="hidden md:ml-6 md:flex space-x-8">
+                    <a href="#intro" class="text-gray-700 hover:text-blue-600">Intro</a>
+                    <a href="#gallery" class="text-gray-700 hover:text-blue-600">Gallery</a>
+                    <a href="#network" class="text-gray-700 hover:text-blue-600">Network</a>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="text-gray-700 focus:outline-none">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path v-if="isMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Intro Section -->
+    <section id="intro" class="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center">
+                <h1 class="text-4xl font-bold text-gray-900 mb-4">Creative Designer</h1>
+                <p class="text-xl text-gray-600 mb-8">Turning ideas into visual experiences</p>
+                <div class="flex justify-center space-x-4">
+                    <a href="#gallery" class="bg-white text-blue-600 px-6 py-2 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200">
+                        View Work
+                    </a>
+                    <a href="#contact" class="border border-gray-300 text-gray-600 px-6 py-2 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200">
+                        Get in Touch
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Gallery Section -->
+    <section id="gallery" class="py-20 bg-white px-4 sm:px-6 lg:px-8">
+        <div class="max-w-6xl mx-auto">
+            <h2 class="text-3xl font-bold text-gray-900 mb-12">Featured Work</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Gallery Items -->
+                <article class="group relative rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-200">
+                    <img src="placeholder-image.jpg" alt="Project 1" class="w-full h-64 object-cover">
+                    <div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center p-4">
+                        <h3 class="text-lg font-semibold text-gray-900">Project 1</h3>
+                        <p class="text-sm text-gray-600">Brand Identity Design</p>
+                    </div>
+                </article>
+
+                <!-- Repeat similar structure for additional projects -->
+                
+                <!-- Add more gallery items as needed -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Network Section -->
+    <section id="network" class="py-20 bg-gray-50 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-6xl mx-auto">
+            <h2 class="text-3xl font-bold text-gray-900 mb-12">Connect With Me</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Contact Form -->
+                <form id="contact-form" class="space-y-6">
+                    <input type="text" placeholder="Your Name" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <input type="email" placeholder="Your Email" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <textarea rows="4" placeholder="Your Message" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                    <button type="submit" class="w-full bg-blue-600 text-white px-6 py-2 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200">
+                        Send Message
+                    </button>
+                </form>
+
+                <!-- Social Links -->
+                <div class="flex space-x-4">
+                    <a href="#" class="text-gray-600 hover:text-blue-600 flex items-center justify-center">
+                        <i class="fab fa-linkedin"></i>
+                    </a>
+                    <a href="#" class="text-gray-600 hover:text-blue-600 flex items-center justify-center">
+                        <i class="fab fa-twitter"></i>
+                    </a>
+                    <a href="#" class="text-gray-600 hover:text-blue-600 flex items-center justify-center">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+                    <a href="#" class="text-gray-600 hover:text-blue-600 flex items-center justify-center">
+                        <i class="fab fa-dribbble"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-6xl mx-auto text-center">
+            <p>&copy; 2023 Creative Designer. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="hidden md:hidden bg-white py-4 px-2 space-y-0">
+        <a href="#gallery" class="block py-2 text-gray-900 hover:bg-gray-100">View Work</a>
+        <a href="#contact" class="block py-2 text-gray-600 hover:bg-gray-100">Get in Touch</a>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Mobile menu toggle
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        let isMenuOpen = false;
+
+        mobileMenuButton.addEventListener('click', () => {
+            isMenuOpen = !isMenuOpen;
+            if (isMenuOpen) {
+                mobileMenuButton.querySelector('svg').setAttribute('d', 'M6 18L18 6M6 6l12 12');
+            } else {
+                mobileMenuButton.querySelector('svg').setAttribute('d', 'M4 6h16M4 12h16m-7 6h7');
+            }
+        });
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#mobile-menu')) {
+                isMenuOpen = false;
+                mobileMenuButton.querySelector('svg').setAttribute('d', 'M4 6h16M4 12h16m-7 6h7');
+            }
+        });
+    </script>
+
+</body>
+</html>

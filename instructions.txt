@@ -4,3 +4,14 @@ npm run dev
 
 # test local model
 npm run test:local-model
+
+# swagger docs
+http://localhost:3003/api-docs
+
+# code generation
+curl -X POST http://localhost:3000/api/generate/code -H "Content-Type: application/json" -d '{"prompt": "Create a function to calculate the factorial of a number", "language": "javascript"}' | jq
+
+# html generation
+
+
+# jdl generation

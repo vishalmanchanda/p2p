@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskBoard Pro - Remote Team Collaboration</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <header class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo -->
+                <div class="flex-shrink-0 flex items-center">
+                    <button type="button" class="p-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-tasks w-6 h-6"></i>
+                    </button>
+                </div>
+
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center space-x-4">
+                    <nav class="flex items-center">
+                        <a href="#" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors">
+                            <i class="fas fa-home w-5 h-5 mr-1"></i>Tasks
+                        </a>
+                        <a href="#" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors">
+                            <i class="fas fa-clock w-5 h-5 mr-1"></i>Time Tracking
+                        </a>
+                    </nav>
+
+                    <!-- Login Button -->
+                    <button type="button" id="loginBtn" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors">
+                        <i class="fas fa-user w-5 h-5 mr-1"></i>Login
+                    </button>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <div class="md:hidden">
+                    <button type="button" id="menuBtn" class="p-2 rounded-lg text-gray-400 hover:text-gray-600 transition-colors">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div id="mobileMenu" class="hidden md:hidden fixed w-full (max-w-7xl) mx-auto px-4 sm:px-6 lg:px-8 h-96 bg-white shadow-lg">
+            <div class="flex items-center min-h-screen">
+                <!-- Logo -->
+                <div class="flex-shrink-0 flex items-center p-4 border-b">
+                    <button type="button" class="p-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-tasks w-6 h-6"></i>
+                    </button>
+                </div>
+
+                <!-- Mobile Menu Items -->
+                <nav class="flex items-center p-4 space-x-4">
+                    <a href="#" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors">
+                        <i class="fas fa-home w-5 h-5 mr-1"></i>Tasks
+                    </a>
+                    <a href="#" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors">
+                        <i class="fas fa-clock w-5 h-5 mr-1"></i>Time Tracking
+                    </a>
+                </nav>
+
+                <!-- Login Button -->
+                <button type="button" id="loginBtnMobile" class="w-full p-3 rounded-lg text-gray-700 hover:text-blue-600 transition-colors">
+                    <i class="fas fa-user w-5 h-5 mr-1"></i>Login
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <script>
+        $(document).ready(function() {
+            // Mobile menu toggle
+            $('#menuBtn').click(function() {
+                const mobileMenu = $('#mobileMenu');
+                if (window.innerWidth <= 768) {
+                    mobileMenu.removeClass('hidden');
+                }
+            });
+
+            // Close mobile menu on click outside
+            $(document).mouseup(function(e) {
+                if (!$(e.target).closest('#mobileMenu').length && !$(e.target).closest('#menuBtn').length) {
+                    mobileMenu.addClass('hidden');
+                }
+            });
+
+            // Login button functionality
+            $('#loginBtn').click(function() {
+                alert('Login feature coming soon!');
+            });
+        });
+    </script>
+</body>
+</html>

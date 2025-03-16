@@ -88,7 +88,8 @@ const options = {
               properties: {
                 code: {
                   type: 'string',
-                  example: '// Function to calculate Fibonacci sequence\nfunction fibonacci(n) {\n  if (n <= 1) return n;\n  return fibonacci(n-1) + fibonacci(n-2);\n}',
+                  description: 'The generated code without explanatory text or <think> tags',
+                  example: 'function fibonacci(n) {\n  if (n <= 1) return n;\n  return fibonacci(n-1) + fibonacci(n-2);\n}',
                 },
                 language: {
                   type: 'string',
@@ -405,6 +406,249 @@ const options = {
                 model: {
                   type: 'string',
                   example: 'deepseek-r1:8b',
+                },
+              },
+            },
+          },
+        },
+        PrototypeGenerationRequest: {
+          type: 'object',
+          required: ['scenario', 'name'],
+          properties: {
+            scenario: {
+              type: 'string',
+              description: 'Detailed description of the scenario for the prototype',
+              example: 'A task management application for remote teams with project tracking and time management features',
+            },
+            name: {
+              type: 'string',
+              description: 'Name for the prototype (will be used for the directory name)',
+              example: 'TaskMaster',
+            },
+            features: {
+              type: 'array',
+              description: 'Specific features to include in the prototype',
+              default: [],
+              items: {
+                type: 'string',
+              },
+              example: ['Task board', 'Time tracking', 'Team chat', 'File sharing'],
+            },
+          },
+        },
+        PrototypeGenerationResponse: {
+          type: 'object',
+          properties: {
+            success: {
+              type: 'boolean',
+              example: true,
+            },
+            data: {
+              type: 'object',
+              properties: {
+                message: {
+                  type: 'string',
+                  example: 'HTML prototype for "TaskMaster" has been generated successfully.',
+                },
+                scenario: {
+                  type: 'string',
+                  example: 'A task management application for remote teams with project tracking and time management features',
+                },
+                filePath: {
+                  type: 'string',
+                  example: '/path/to/public/taskmaster/index.html',
+                },
+                url: {
+                  type: 'string',
+                  example: '/public/taskmaster/index.html',
+                },
+                model: {
+                  type: 'string',
+                  example: 'deepseek-r1:8b',
+                },
+              },
+            },
+          },
+        },
+        PrototypeBuilderRequest: {
+          type: 'object',
+          required: ['scenario', 'name', 'sections'],
+          properties: {
+            scenario: {
+              type: 'string',
+              description: 'Detailed description of the scenario for the prototype',
+              example: 'A task management application for remote teams with project tracking and time management features',
+            },
+            name: {
+              type: 'string',
+              description: 'Name for the prototype (will be used for the directory name)',
+              example: 'TaskMaster',
+            },
+            sections: {
+              type: 'array',
+              description: 'Array of sections to generate for the prototype',
+              items: {
+                type: 'object',
+                properties: {
+                  id: {
+                    type: 'string',
+                    description: 'Unique identifier for the section (used in the HTML)',
+                    example: 'header',
+                  },
+                  type: {
+                    type: 'string',
+                    description: 'Type of section (e.g., header, main, features, footer)',
+                    example: 'header',
+                  },
+                  description: {
+                    type: 'string',
+                    description: 'Detailed description of what this section should contain',
+                    example: 'A responsive navigation header with logo, menu items, and a login button',
+                  },
+                },
+              },
+              example: [
+                {
+                  id: 'header',
+                  type: 'header',
+                  description: 'A responsive navigation header with logo, menu items, and a login button',
+                },
+                {
+                  id: 'main',
+                  type: 'main',
+                  description: 'Main content area with task board showing tasks in different columns (To Do, In Progress, Done)',
+                },
+                {
+                  id: 'features',
+                  type: 'features',
+                  description: 'Feature highlights section with icons and short descriptions of key features',
+                },
+                {
+                  id: 'footer',
+                  type: 'footer',
+                  description: 'Footer with copyright, links, and contact information',
+                },
+              ],
+            },
+            features: {
+              type: 'array',
+              description: 'Specific features to include in the prototype',
+              default: [],
+              items: {
+                type: 'string',
+              },
+              example: ['Task board', 'Time tracking', 'Team chat', 'File sharing'],
+            },
+          },
+        },
+        PrototypeBuilderResponse: {
+          type: 'object',
+          properties: {
+            success: {
+              type: 'boolean',
+              example: true,
+            },
+            data: {
+              type: 'object',
+              properties: {
+                message: {
+                  type: 'string',
+                  example: 'HTML prototype for "TaskMaster" has been generated successfully.',
+                },
+                scenario: {
+                  type: 'string',
+                  example: 'A task management application for remote teams with project tracking and time management features',
+                },
+                sections: {
+                  type: 'array',
+                  items: {
+                    type: 'string',
+                  },
+                  example: ['header', 'main', 'features', 'footer'],
+                },
+                filePath: {
+                  type: 'string',
+                  example: '/path/to/public/taskmaster/index.html',
+                },
+                url: {
+                  type: 'string',
+                  example: '/public/taskmaster/index.html',
+                },
+              },
+            },
+          },
+        },
+        SectionGenerationRequest: {
+          type: 'object',
+          required: ['scenario', 'name', 'section'],
+          properties: {
+            scenario: {
+              type: 'string',
+              description: 'Detailed description of the scenario for the prototype',
+              example: 'A task management application for remote teams with project tracking and time management features',
+            },
+            name: {
+              type: 'string',
+              description: 'Name for the prototype (will be used for the directory name)',
+              example: 'TaskMaster',
+            },
+            section: {
+              type: 'object',
+              description: 'Section configuration to generate',
+              properties: {
+                id: {
+                  type: 'string',
+                  description: 'Unique identifier for the section (used in the HTML)',
+                  example: 'header',
+                },
+                type: {
+                  type: 'string',
+                  description: 'Type of section (e.g., header, main, features, footer)',
+                  example: 'header',
+                },
+                description: {
+                  type: 'string',
+                  description: 'Detailed description of what this section should contain',
+                  example: 'A responsive navigation header with logo, menu items, and a login button',
+                },
+              },
+            },
+            features: {
+              type: 'array',
+              description: 'Specific features to include in the section',
+              default: [],
+              items: {
+                type: 'string',
+              },
+              example: ['Task board', 'Time tracking', 'Team chat', 'File sharing'],
+            },
+          },
+        },
+        SectionGenerationResponse: {
+          type: 'object',
+          properties: {
+            success: {
+              type: 'boolean',
+              example: true,
+            },
+            data: {
+              type: 'object',
+              properties: {
+                message: {
+                  type: 'string',
+                  example: 'Section "header" for "TaskMaster" has been generated successfully.',
+                },
+                scenario: {
+                  type: 'string',
+                  example: 'A task management application for remote teams with project tracking and time management features',
+                },
+                section: {
+                  type: 'string',
+                  example: 'header',
+                },
+                filePath: {
+                  type: 'string',
+                  example: '/path/to/public/taskmaster/header.html',
                 },
               },
             },

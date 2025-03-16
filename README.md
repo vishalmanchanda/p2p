@@ -99,6 +99,26 @@ This provides a user-friendly interface to:
 
 ### Code Generation
 - `POST /api/generate/code`
+  - Generates clean, production-ready code based on the provided prompt
+  - Returns only the actual code without explanatory text or `<think>` tags
+
+### HTML Prototype Generation
+- `POST /api/generate/prototype`
+  - Generates a professional-looking HTML prototype based on a scenario description
+  - Uses HTML5, jQuery, Tailwind CSS, and Font Awesome
+  - Saves the generated prototype to the public directory
+  - Returns a URL to access the prototype
+
+### Section-Based HTML Prototype Generation
+- `POST /api/generate/prototype-builder`
+  - Builds a complete HTML prototype by generating and assembling multiple sections
+  - Each section is created individually using the LLM and then combined
+  - Provides more control over the structure and content of the prototype
+- `POST /api/generate/prototype-builder/section`
+  - Generates a single section for an HTML prototype
+  - Allows for iterative development of prototypes section by section
+- `GET /api/generate/prototype-builder/{name}/sections`
+  - Lists all generated sections for a specific prototype
 
 ### Content Validation
 - `POST /api/validate/content`

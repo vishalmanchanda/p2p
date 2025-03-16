@@ -6,6 +6,7 @@ const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpecs = require('./config/swagger');
+const path = require('path');
 
 // Import model check utility
 const { checkModelOrExit } = require('./utils/modelCheck');
@@ -17,6 +18,8 @@ const researchRoutes = require('./routes/research.routes');
 const summarizeRoutes = require('./routes/summarize.routes');
 const insightsRoutes = require('./routes/insights.routes');
 const svgRoutes = require('./routes/svg.routes');
+const prototypeRoutes = require('./routes/prototype.routes');
+const prototypeBuilderRoutes = require('./routes/prototype-builder.routes');
 
 // Import error handler
 const { errorHandler } = require('./middleware/errorHandler');
@@ -29,6 +32,9 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
+
+// Serve static files from the public directory
+app.use('/public', express.static(path.join(process.cwd(), 'public')));
 
 // Rate limiting
 const apiLimiter = rateLimit({
@@ -62,6 +68,8 @@ app.use('/api/research/topic', researchRoutes);
 app.use('/api/summarize', summarizeRoutes);
 app.use('/api/derive/insights', insightsRoutes);
 app.use('/api/generate/svg', svgRoutes);
+app.use('/api/generate/prototype', prototypeRoutes);
+app.use('/api/generate/prototype-builder', prototypeBuilderRoutes);
 
 // Health check endpoint
 /**

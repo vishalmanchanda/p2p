@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const deepseekService = require('../services/deepseek.service');
+const genAIService = require('../services/gen-ai.service');
 const { validate, schemas } = require('../middleware/validator');
 
 /**
@@ -34,7 +34,7 @@ router.post('/', validate(schemas.contentValidation), async (req, res, next) => 
   try {
     const { content, criteria, detailed } = req.body;
     
-    const result = await deepseekService.validateContent({
+    const result = await genAIService.validateContent({
       content,
       criteria,
       detailed

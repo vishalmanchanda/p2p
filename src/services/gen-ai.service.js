@@ -4,11 +4,10 @@ const { ApiError } = require('../middleware/errorHandler');
 /**
  * Service for interacting with the local DeepSeek model
  */
-class DeepSeekService {
-  constructor() {
-    this.apiKey = process.env.DEEPSEEK_API_KEY;
-    this.apiUrl = process.env.DEEPSEEK_API_URL;
-    this.model = process.env.DEEPSEEK_MODEL;
+class GenAIService {
+  constructor( llmName = 'deepseek') {
+    
+    this.pickModelAccessDetails(llmName);
     
     // Initialize axios instance with common config
     this.client = axios.create({
@@ -30,6 +29,28 @@ class DeepSeekService {
         throw new ApiError(message, statusCode, code);
       }
     );
+  }
+
+  pickModelAccessDetails(llmName) {
+    if (llmName === 'deepseek') {
+      this.apiKey = process.env.DEEPSEEK_API_KEY;
+      this.apiUrl = process.env.DEEPSEEK_API_URL;
+      this.model = process.env.DEEPSEEK_MODEL;
+    } else if (llmName === 'ollama') {
+      this.apiKey = process.env.OLLAMA_API_KEY;
+      this.apiUrl = process.env.OLLAMA_API_URL;
+      this.model = process.env.OLLAMA_MODEL;
+    } else if (llmName === 'gemini') {
+      this.apiKey = process.env.GEMINI_API_KEY;
+      this.apiUrl = process.env.GEMINI_API_URL;
+      this.model = process.env.GEMINI_MODEL;
+    } else if (llmName === 'anthropic') {
+      this.apiKey = process.env.ANTHROPIC_API_KEY;
+      this.apiUrl = process.env.ANTHROPIC_API_URL;
+      this.model = process.env.ANTHROPIC_MODEL;
+    } else {
+      throw new Error(`Unsupported LLM: ${llmName}`);
+    }
   }
 
   /**
@@ -104,11 +125,38 @@ class DeepSeekService {
       temperature: 0.2 // Lower temperature for more deterministic code generation
     });
     
+    // Filter out <think> tags from the response
+    let code = response.choices[0].message.content;
+    code = this._removeThinkTags(code);
+    
     return {
-      code: response.choices[0].message.content,
+      code,
       language,
       model: response.model
     };
+  }
+  
+  /**
+   * Remove <think> tags and their content from the response
+   * @param {string} text - The text to process
+   * @returns {string} - The text without <think> tags and their content
+   */
+  _removeThinkTags(text) {
+    // Remove <think>...</think> blocks (case insensitive)
+    text = text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+    
+    // Extract just the code from code blocks if present
+    // This regex will match code blocks with or without language specification
+    const codeBlockRegex = /```(?:\w*\n|\n)?([\s\S]*?)```/;
+    const match = text.match(codeBlockRegex);
+    
+    if (match && match[1]) {
+      // Return just the code inside the code block
+      return match[1].trim();
+    }
+    
+    // If no code block is found, return the filtered text
+    return text;
   }
 
   /**
@@ -243,4 +291,4 @@ class DeepSeekService {
   }
 }
 
-module.exports = new DeepSeekService(); 
+module.exports = new GenAIService(); 

@@ -23,6 +23,7 @@ const prototypeBuilderRoutes = require('./routes/prototype-builder.routes');
 const jdlRoutes = require('./routes/jdl.routes');
 const jdlToJsonRoutes = require('./routes/jdl-to-json.routes');
 const prototypeJsonServerRoutes = require('./routes/prototype-json-server.routes');
+const apiGeneratorRoutes = require('./routes/apiGenerator');
 
 // Import error handler
 const { errorHandler } = require('./middleware/errorHandler');
@@ -76,6 +77,7 @@ app.use('/api/generate/prototype-builder', prototypeBuilderRoutes);
 app.use('/api/generate/jdl', jdlRoutes);
 app.use('/api/generate/jdl-to-json', jdlToJsonRoutes);
 app.use('/api/generate/prototype-json-server', prototypeJsonServerRoutes);
+app.use('/api/generator/api-js', apiGeneratorRoutes);
 
 // Health check endpoint
 /**

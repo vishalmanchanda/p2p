@@ -10,6 +10,7 @@ class GenAIService {
     this.pickModelAccessDetails(llmName);
     
     // Initialize axios instance with common config
+    console.log('Initializing axios instance with API URL:', this.apiUrl);
     this.client = axios.create({
       baseURL: this.apiUrl,
       headers: {
@@ -34,8 +35,8 @@ class GenAIService {
   pickModelAccessDetails(llmName) {
     if (llmName === 'deepseek') {
       this.apiKey = process.env.DEEPSEEK_API_KEY;
-      this.apiUrl = process.env.DEEPSEEK_API_URL;
-      this.model = process.env.DEEPSEEK_MODEL;
+      this.apiUrl = process.env.DEEPSEEK_API_URL || 'http://127.0.0.1:11434';
+      this.model = process.env.DEEPSEEK_MODEL || 'deepseek-r1:8b';
       
       // Debug log
       console.log('DeepSeek API URL:', this.apiUrl);

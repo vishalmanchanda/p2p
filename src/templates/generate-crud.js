@@ -446,6 +446,11 @@ class EnhancedCrudGenerator {
       } else if (attr.type === 'number') {
         const value = formData.get(attr.name);
         formValues[attr.name] = value ? Number(value) : null;
+      } 
+      else if (attr.type === 'date') {
+        formValues[attr.name] = formData.get(attr.name);
+      } else if (attr.name === 'id' ) {
+        formValues[attr.name] = this.editId || this.data.length + 1;
       } else {
         formValues[attr.name] = formData.get(attr.name);
       }
@@ -599,11 +604,27 @@ class EnhancedCrudGenerator {
     handleSearch(e) {
       // Debounce search to avoid too many requests
       clearTimeout(this.searchTimeout);
+      
+      // Show a loading indicator in the search input
+      const searchInput = document.getElementById(this.elementIds.searchInputId);
+      if (searchInput) {
+        searchInput.classList.add('bg-gray-50');
+        searchInput.classList.add('animate-pulse');
+      }
+      
       this.searchTimeout = setTimeout(() => {
         this.searchTerm = e.target.value.toLowerCase();
+        console.log(`Searching for: "${this.searchTerm}"`); // Debug log
         this.currentPage = 1; // Reset to first page when searching
+        
+        // Remove the loading indicator
+        if (searchInput) {
+          searchInput.classList.remove('bg-gray-50');
+          searchInput.classList.remove('animate-pulse');
+        }
+        
         this.fetchData();
-      }, 300); // Wait 300ms after typing stops
+      }, 500); // Increased to 500ms for better debounce
     }
   
     handleTableClick(e) {
@@ -656,21 +677,22 @@ class EnhancedCrudGenerator {
         let url = this.entityEndpoint;
         const params = new URLSearchParams();
         
-        // Pagination
+        // Pagination - use the correct parameter names for your JSON Server
+        // Some JSON Servers use _page and _limit, others use page and per_page
         params.append('_page', this.currentPage);
         params.append('_per_page', this.itemsPerPage);
         
         // Sorting
         if (this.sortField) {
           params.append('_sort', this.sortField);
-          params.append('_order', this.sortDirection);
+          // params.append('_order', this.sortDirection);
         }
         
         // Improved searching - search across multiple fields
-        if (this.searchTerm) {
-          // For JSON Server, we need a more comprehensive search approach
-          params.append('q', this.searchTerm);
-        }
+        // if (this.searchTerm) {
+        //   // For JSON Server, we need a more comprehensive search approach
+        //   params.append('q', this.searchTerm);
+        // }
         
         url = `${url}?${params.toString()}`;
         
@@ -683,44 +705,61 @@ class EnhancedCrudGenerator {
         }
         
         // Get total count from headers
-        const totalCount = parseInt(response.headers.get('X-Total-Count') || '0');
-        this.totalPages = Math.ceil(totalCount / this.itemsPerPage);
         
         let responseData = await response.json();
+        let totalCount = responseData.items;
         console.log('API Response:', responseData); // Debug log
         
         // Handle different response formats
         let processedData;
         
         if (responseData.data && Array.isArray(responseData.data)) {
-          // Format: { data: [...] }
+          // Format: { data: [...], pagination: { ... } }
           processedData = responseData.data;
+          
+          totalCount = responseData.items;
         } else if (Array.isArray(responseData)) {
           // Format: [...]
           processedData = responseData;
         } else if (responseData && typeof responseData === 'object') {
-          // Format: { ... } (single object)
-          processedData = [responseData];
+          // Format: { ... } (single object or object with items array)
+          if (responseData.items) {
+            processedData = responseData;
+            totalCount = responseData.items || totalCount;
+          } else {
+            processedData = [responseData];
+          }
         } else {
           // Fallback to empty array
           processedData = [];
         }
         
+        // If we still don't have a total count, use the array length
+        if (totalCount === 0 && processedData.length > 0) {
+          totalCount = processedData.length;
+        }
+        
         console.log('Processed data:', processedData); // Debug log
+        console.log('Total count:', totalCount); // Debug log
+        
         this.data = processedData;
+        this.totalPages = Math.max(1, Math.ceil(totalCount / this.itemsPerPage));
         
         this.updateTable();
         this.updatePagination(totalCount);
       } catch (error) {
         console.error('Error fetching data:', error);
-        document.getElementById(this.elementIds.tableBodyId).innerHTML = `
-          <tr>
-            <td colspan="${this.config.attributes.filter(attr => !attr.hideInTable).length + 1}" class="px-6 py-4 text-center text-sm text-red-500">
-              <i class="fas fa-exclamation-triangle mr-2"></i>
-              Error loading data: ${error.message || 'Unknown error'}
-            </td>
-          </tr>
-        `;
+        const tableBody = document.getElementById(this.elementIds.tableBodyId);
+        if (tableBody) {
+          tableBody.innerHTML = `
+            <tr>
+              <td colspan="${this.config.attributes.filter(attr => !attr.hideInTable).length + 1}" class="px-6 py-4 text-center text-sm text-red-500">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                Error loading data: ${error.message || 'Unknown error'}
+              </td>
+            </tr>
+          `;
+        }
         this.showToast(`Error: ${error.message || 'Failed to load data'}`, 'error');
       } finally {
         this.setLoading(false);
@@ -741,6 +780,11 @@ class EnhancedCrudGenerator {
     }
   
     updatePagination(totalCount) {
+      console.log(`Updating pagination with total count: ${totalCount}`); // Debug log
+      
+      // Ensure totalCount is a number and not NaN
+      totalCount = parseInt(totalCount) || 0;
+      
       // If there's no data, handle pagination display appropriately
       if (totalCount === 0) {
         const pageStart = document.getElementById(this.elementIds.paginationIds.pageStart);
@@ -781,8 +825,10 @@ class EnhancedCrudGenerator {
       }
   
       // Calculate page information
-      const pageStart = ((this.currentPage - 1) * this.itemsPerPage) + 1;
+      const pageStart = Math.min(((this.currentPage - 1) * this.itemsPerPage) + 1, totalCount);
       const pageEnd = Math.min(pageStart + this.itemsPerPage - 1, totalCount);
+      
+      console.log(`Page info: ${pageStart} to ${pageEnd} of ${totalCount}`); // Debug log
       
       const pageStartEl = document.getElementById(this.elementIds.paginationIds.pageStart);
       const pageEndEl = document.getElementById(this.elementIds.paginationIds.pageEnd);
@@ -869,67 +915,78 @@ class EnhancedCrudGenerator {
     }
   
     showToast(message, type = 'info') {
-        const toastContainer = document.getElementById(this.elementIds.entityPrefix + '-toast-container');
-        const id = `toast-${Date.now()}`;
-        
-        let bgColor, icon;
-        switch (type) {
-          case 'success':
-            bgColor = 'bg-green-500';
-            icon = '<i class="fas fa-check-circle mr-2"></i>';
-            break;
-          case 'error':
-            bgColor = 'bg-red-500';
-            icon = '<i class="fas fa-exclamation-circle mr-2"></i>';
-            break;
-          case 'warning':
-            bgColor = 'bg-yellow-500';
-            icon = '<i class="fas fa-exclamation-triangle mr-2"></i>';
-            break;
-          default:
-            bgColor = 'bg-indigo-500';
-            icon = '<i class="fas fa-info-circle mr-2"></i>';
-        }
-        
-        const toast = document.createElement('div');
-        toast.id = id;
-        toast.className = `${bgColor} text-white px-4 py-3 rounded-lg shadow-md flex items-center mb-3 transform transition-all duration-300 ease-in-out translate-x-full`;
-        toast.innerHTML = `
-          ${icon}
-          <div class="flex-1">${message}</div>
-          <button class="ml-4 text-white focus:outline-none">
-            <i class="fas fa-times"></i>
-          </button>
-        `;
-        
-        toastContainer.appendChild(toast);
-        
-        // Animate in
-        setTimeout(() => {
-          toast.classList.remove('translate-x-full');
-        }, 10);
-        
-        // Auto dismiss
-        const dismissTimeout = setTimeout(() => {
-          this.dismissToast(id);
-        }, 5000);
-        
-        // Dismiss on click
-        toast.querySelector('button').addEventListener('click', () => {
-          clearTimeout(dismissTimeout);
-          this.dismissToast(id);
-        });
+      // Get the entity prefix from the element IDs
+      const entityPrefix = this.config.entityName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+      const toastContainerId = `${entityPrefix}-toast-container`;
+      const toastContainer = document.getElementById(toastContainerId);
+      
+      if (!toastContainer) {
+        console.error(`Toast container not found: ${toastContainerId}`);
+        return;
       }
       
-      dismissToast(id) {
-        const toast = document.getElementById(id);
-        if (!toast) return;
-        
-        toast.classList.add('translate-x-full');
-        setTimeout(() => {
-          toast.remove();
-        }, 300);
+      const id = `toast-${Date.now()}`;
+      
+      let bgColor, icon;
+      switch (type) {
+        case 'success':
+          bgColor = 'bg-green-500';
+          icon = '<i class="fas fa-check-circle mr-2"></i>';
+          break;
+        case 'error':
+          bgColor = 'bg-red-500';
+          icon = '<i class="fas fa-exclamation-circle mr-2"></i>';
+          break;
+        case 'warning':
+          bgColor = 'bg-yellow-500';
+          icon = '<i class="fas fa-exclamation-triangle mr-2"></i>';
+          break;
+        default:
+          bgColor = 'bg-indigo-500';
+          icon = '<i class="fas fa-info-circle mr-2"></i>';
       }
+      
+      const toast = document.createElement('div');
+      toast.id = id;
+      toast.className = `${bgColor} text-white px-4 py-3 rounded-lg shadow-md flex items-center mb-3 transform transition-all duration-300 ease-in-out translate-x-full`;
+      toast.innerHTML = `
+        ${icon}
+        <div class="flex-1">${message}</div>
+        <button class="ml-4 text-white focus:outline-none">
+          <i class="fas fa-times"></i>
+        </button>
+      `;
+      
+      toastContainer.appendChild(toast);
+      
+      // Animate in
+      setTimeout(() => {
+        toast.classList.remove('translate-x-full');
+      }, 10);
+      
+      // Auto dismiss
+      const dismissTimeout = setTimeout(() => {
+        this.dismissToast(id);
+      }, 5000);
+      
+      // Dismiss on click
+      toast.querySelector('button').addEventListener('click', () => {
+        clearTimeout(dismissTimeout);
+        this.dismissToast(id);
+      });
+      
+      console.log(`Toast shown: ${message}`); // Debug log
+    }
+    
+    dismissToast(id) {
+      const toast = document.getElementById(id);
+      if (!toast) return;
+      
+      toast.classList.add('translate-x-full');
+      setTimeout(() => {
+        toast.remove();
+      }, 300);
+    }
   
     // Add a method to load data if not already loaded
     async loadDataIfNeeded() {
@@ -1030,7 +1087,7 @@ class EnhancedCrudGenerator {
       entityName: 'users',
       title: 'User Management',
       apiBaseUrl: 'http://localhost:3002',
-      itemsPerPage: 10,
+      itemsPerPage: 5,
       attributes: [
         { 
           name: 'name', 

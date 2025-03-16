@@ -20,6 +20,8 @@ const insightsRoutes = require('./routes/insights.routes');
 const svgRoutes = require('./routes/svg.routes');
 const prototypeRoutes = require('./routes/prototype.routes');
 const prototypeBuilderRoutes = require('./routes/prototype-builder.routes');
+const jdlRoutes = require('./routes/jdl.routes');
+const jdlToJsonRoutes = require('./routes/jdl-to-json.routes');
 
 // Import error handler
 const { errorHandler } = require('./middleware/errorHandler');
@@ -70,6 +72,8 @@ app.use('/api/derive/insights', insightsRoutes);
 app.use('/api/generate/svg', svgRoutes);
 app.use('/api/generate/prototype', prototypeRoutes);
 app.use('/api/generate/prototype-builder', prototypeBuilderRoutes);
+app.use('/api/generate/jdl', jdlRoutes);
+app.use('/api/generate/jdl-to-json', jdlToJsonRoutes);
 
 // Health check endpoint
 /**

@@ -84,16 +84,35 @@ npm start
 
 ## API Documentation
 
-The API is documented using Swagger UI. Once the server is running, you can access the interactive API documentation at:
+The API is documented using Swagger UI. You can access the interactive documentation at:
 
 ```
 http://localhost:3000/api-docs
 ```
 
-This provides a user-friendly interface to:
-- Explore all available endpoints
-- View request and response schemas
-- Test the API directly from the browser
+### Available API Endpoints
+
+- `POST /api/generate/code` - Generate code based on requirements
+- `POST /api/validate/content` - Validate content against specified criteria
+- `POST /api/research/topic` - Research a topic and provide information
+- `POST /api/summarize` - Summarize content
+- `POST /api/derive/insights` - Derive insights from provided content
+- `POST /api/generate/svg` - Generate SVG based on requirements
+- `POST /api/generate/prototype` - Generate a prototype based on requirements
+- `POST /api/generate/prototype-builder` - Generate a prototype using the section-based builder
+- `POST /api/generate/jdl` - Generate JHipster Domain Language (JDL) from requirements
+- `POST /api/generate/jdl-to-json` - Convert JDL to JSON Server db.json format with mock data
+
+### JDL to JSON Server Conversion
+
+The API provides endpoints to convert JHipster Domain Language (JDL) to JSON Server format with mock data:
+
+- `POST /api/generate/jdl-to-json` - Convert JDL content to JSON Server db.json
+- `POST /api/generate/jdl-to-json/from-jdl-file/{jdlName}` - Convert an existing JDL file to JSON Server db.json
+- `POST /api/generate/jdl-to-json/from-requirements` - Generate JDL from requirements and convert to JSON Server db.json in one step
+- `GET /api/generate/jdl-to-json/{name}` - Get a previously generated JSON Server db.json file
+
+The generated JSON Server files can be used with [JSON Server](https://github.com/typicode/json-server) to create a mock API for your application.
 
 ## API Endpoints
 
@@ -119,6 +138,17 @@ This provides a user-friendly interface to:
   - Allows for iterative development of prototypes section by section
 - `GET /api/generate/prototype-builder/{name}/sections`
   - Lists all generated sections for a specific prototype
+
+### JHipster Domain Language (JDL) Generation
+- `POST /api/generate/jdl`
+  - Generates JDL entity definitions and relationships from natural language requirements
+  - Creates entity models with appropriate fields, types, and validations
+  - Defines relationships between entities (OneToOne, OneToMany, ManyToOne, ManyToMany)
+  - Saves the generated JDL to a file that can be used with JHipster
+- `GET /api/generate/jdl/{name}`
+  - Retrieves a previously generated JDL file by name
+- `GET /api/generate/jdl/list/all`
+  - Lists all previously generated JDL files
 
 ### Content Validation
 - `POST /api/validate/content`

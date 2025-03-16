@@ -1,0 +1,68 @@
+entities:
+  User:
+    fields:
+      username: String@required(minlength=3, maxlength=25)
+      email: String@required(pattern="^[a-zA-Z0-9\\.\\-_]+@([a-zA-Z0-9-]+\\.)*[a-zA-Z]{2,}$")
+      bio: Text@optional(maxlength=200)
+    validations:
+      - username: notSimilarTo(email)
+    options:
+      audit: true
+      softDelete: false
+
+  Blog:
+    fields:
+      name: String@required(maxlength=100)
+      description: Text@optional(maxlength=200)
+      creationDate: LocalDate@default=currentDateTime()
+    options:
+      service: true
+      pagination: 10
+
+  Post:
+    fields:
+      title: String@required(maxlength=150)
+      content: Text@optional(maxlength=4000)
+      tags: [String]
+      creationDate: LocalDate@default=currentDateTime()
+    enum:
+      Status: PUBLISHED DRAFT
+    options:
+      service: true
+      pagination: 20
+
+  Comment:
+    fields:
+      content: String@required(minlength=1, maxlength=500)
+      creationDate: LocalDate@default=currentDateTime()
+    relationships:
+      - post: ManyToOne(Comment::post)
+
+  # Relationships
+  userToBlog:
+    type: OneToMany(User::blogs)
+  
+  blogToUser:
+    type: ManyToOne(Blog::user)
+  
+  postToBlog:
+    type: ManyToOne(Post::blog)
+  
+  postToComment:
+    type: OneToMany(Post::comments)
+  
+  commentToPost:
+    type: ManyToOne(Comment::post)
+
+application:
+  config:
+    database:
+      url: jdbc:mysql://localhost:3306/mydb
+      driver: com.mysql.jdbc.Driver
+      dialect: org.hibernate.dialect.MySQL
+
+    jpa:
+      hibernate:
+        namingStrategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+      properties:
+        hibernate.format_sql: true

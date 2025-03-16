@@ -654,6 +654,199 @@ const options = {
             },
           },
         },
+        JdlGenerationRequest: {
+          type: 'object',
+          required: ['requirements', 'name'],
+          properties: {
+            requirements: {
+              type: 'string',
+              description: 'Detailed requirements for the entity model',
+              example: 'Create an e-commerce application with Product, Order, Customer, and Review entities. Products have a name, description, price, and category. Orders have a date, status, and total amount. Customers have a name, email, and address. Reviews have a rating and comment.',
+            },
+            name: {
+              type: 'string',
+              description: 'Name for the JDL file (will be used for the file name)',
+              example: 'e-commerce',
+            },
+            options: {
+              type: 'object',
+              description: 'Additional options for JDL generation',
+              properties: {
+                includeApplicationConfig: {
+                  type: 'boolean',
+                  description: 'Whether to include application configuration in the JDL',
+                  default: false,
+                  example: false,
+                },
+                microserviceNames: {
+                  type: 'array',
+                  description: 'Names of microservices to define entities for',
+                  default: [],
+                  items: {
+                    type: 'string',
+                  },
+                  example: ['productservice', 'orderservice'],
+                },
+                databaseType: {
+                  type: 'string',
+                  description: 'Database type to use',
+                  enum: ['sql', 'mongodb', 'cassandra', 'couchbase', 'neo4j'],
+                  default: 'sql',
+                  example: 'sql',
+                },
+              },
+            },
+          },
+        },
+        JdlGenerationResponse: {
+          type: 'object',
+          properties: {
+            success: {
+              type: 'boolean',
+              example: true,
+            },
+            data: {
+              type: 'object',
+              properties: {
+                message: {
+                  type: 'string',
+                  example: 'JDL for "e-commerce" has been generated successfully.',
+                },
+                name: {
+                  type: 'string',
+                  example: 'e-commerce',
+                },
+                filePath: {
+                  type: 'string',
+                  example: '/path/to/public/jdl/e-commerce.jdl',
+                },
+                url: {
+                  type: 'string',
+                  example: '/public/jdl/e-commerce.jdl',
+                },
+                content: {
+                  type: 'string',
+                  description: 'The generated JDL content',
+                  example: 'entity Product {\n  name String required,\n  description TextBlob,\n  price BigDecimal required min(0),\n  category String\n}\n\nentity Order {\n  date ZonedDateTime required,\n  status String required,\n  totalAmount BigDecimal required min(0)\n}\n\nrelationship OneToMany {\n  Customer to Order\n}',
+                },
+                validation: {
+                  type: 'object',
+                  properties: {
+                    isValid: {
+                      type: 'boolean',
+                      example: true,
+                    },
+                    errors: {
+                      type: 'array',
+                      items: {
+                        type: 'string',
+                      },
+                      example: [],
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        JdlToJsonRequest: {
+          type: 'object',
+          required: ['jdlContent', 'name'],
+          properties: {
+            jdlContent: {
+              type: 'string',
+              description: 'JDL content to convert to JSON Server format',
+              example: 'entity Blog { name String required }'
+            },
+            name: {
+              type: 'string',
+              description: 'Name for the generated JSON file',
+              example: 'blog-app'
+            },
+            options: {
+              type: 'object',
+              properties: {
+                recordsPerEntity: {
+                  type: 'integer',
+                  description: 'Number of records to generate per entity',
+                  default: 10,
+                  example: 5
+                }
+              }
+            }
+          }
+        },
+        JdlToJsonResponse: {
+          type: 'object',
+          properties: {
+            success: {
+              type: 'boolean',
+              description: 'Indicates if the operation was successful',
+              example: true
+            },
+            data: {
+              type: 'object',
+              properties: {
+                filePath: {
+                  type: 'string',
+                  description: 'Path to the generated JSON file',
+                  example: '/Users/username/project/public/blog-app/db.json'
+                },
+                url: {
+                  type: 'string',
+                  description: 'URL to access the generated JSON file',
+                  example: '/public/blog-app/db.json'
+                },
+                entities: {
+                  type: 'array',
+                  description: 'List of entities included in the generated JSON',
+                  items: {
+                    type: 'string'
+                  },
+                  example: ['Blog', 'Post', 'Comment']
+                }
+              }
+            }
+          }
+        },
+        JdlFromRequirementsToJsonRequest: {
+          type: 'object',
+          required: ['requirements', 'name'],
+          properties: {
+            requirements: {
+              type: 'string',
+              description: 'Requirements for generating JDL',
+              example: 'Create a blog application with User, Blog, Post, and Comment entities'
+            },
+            name: {
+              type: 'string',
+              description: 'Name for the generated files',
+              example: 'blog-app'
+            },
+            jdlOptions: {
+              type: 'object',
+              properties: {
+                databaseType: {
+                  type: 'string',
+                  enum: ['sql', 'mongodb', 'cassandra', 'couchbase'],
+                  default: 'sql',
+                  description: 'Type of database to use'
+                }
+              }
+            },
+            jsonOptions: {
+              type: 'object',
+              properties: {
+                recordsPerEntity: {
+                  type: 'integer',
+                  description: 'Number of records to generate per entity',
+                  default: 10,
+                  example: 5
+                }
+              }
+            }
+          }
+        },
       },
       responses: {
         BadRequest: {

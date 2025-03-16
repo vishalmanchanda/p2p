@@ -1,0 +1,220 @@
+{
+  "User": [
+    {
+      "username": "user1",
+      "email": "user1@example.com",
+      "bio": "Sample bio for user 1."
+    },
+    {
+      "username": "user2",
+      "email": "user2@example.com",
+      "bio": "Sample bio for user 2."
+    },
+    {
+      "username": "user3",
+      "email": "user3@example.com",
+      "bio": "Sample bio for user 3."
+    },
+    {
+      "username": "user4",
+      "email": "user4@example.com",
+      "bio": "Sample bio for user 4."
+    },
+    {
+      "username": "user5",
+      "email": "user5@example.com",
+      "bio": "Sample bio for user 5."
+    }
+  ],
+  "Blog": [
+    {
+      "name": "blog1",
+      "handle": "blog1-handle",
+      "description": "Description for blog 1.",
+      "user": {
+        "id": 0
+      },
+      "createdAt": "2023-10-01T12:00:00Z"
+    },
+    {
+      "name": "blog2",
+      "handle": "blog2-handle",
+      "description": "Description for blog 2.",
+      "user": {
+        "id": 1
+      },
+      "createdAt": "2023-10-01T12:00:00Z"
+    },
+    {
+      "name": "blog3",
+      "handle": "blog3-handle",
+      "description": "Description for blog 3.",
+      "user": {
+        "id": 2
+      },
+      "createdAt": "2023-10-01T12:00:00Z"
+    },
+    {
+      "name": "blog4",
+      "handle": "blog4-handle",
+      "description": "Description for blog 4.",
+      "user": {
+        "id": 3
+      },
+      "createdAt": "2023-10-01T12:00:00Z"
+    },
+    {
+      "name": "blog5",
+      "handle": "blog5-handle",
+      "description": "Description for blog 5.",
+      "user": {
+        "id": 4
+      },
+      "createdAt": "2023-10-01T12:00:00Z"
+    }
+  ],
+  "Post": [
+    {
+      "title": "Post 1 Title",
+      "content": "Sample content for post 1.",
+      "date": "2023-10-01T12:00:00Z",
+      "tags": [
+        "tag1",
+        "tag2"
+      ],
+      "user": {
+        "id": 0
+      },
+      "blog": {
+        "id": 0
+      }
+    },
+    {
+      "title": "Post 2 Title",
+      "content": "Sample content for post 2.",
+      "date": "2023-10-01T12:00:00Z",
+      "tags": [
+        "tag1",
+        "tag3"
+      ],
+      "user": {
+        "id": 1
+      },
+      "blog": {
+        "id": 1
+      }
+    },
+    {
+      "title": "Post 3 Title",
+      "content": "Sample content for post 3.",
+      "date": "2023-10-01T12:00:00Z",
+      "tags": [
+        "tag2",
+        "tag4"
+      ],
+      "user": {
+        "id": 2
+      },
+      "blog": {
+        "id": 2
+      }
+    },
+    {
+      "title": "Post 4 Title",
+      "content": "Sample content for post 4.",
+      "date": "2023-10-01T12:00:00Z",
+      "tags": [
+        "tag1",
+        "tag5"
+      ],
+      "user": {
+        "id": 3
+      },
+      "blog": {
+        "id": 3
+      }
+    },
+    {
+      "title": "Post 5 Title",
+      "content": "Sample content for post 5.",
+      "date": "2023-10-01T12:00:00Z",
+      "tags": [
+        "tag3",
+        "tag6"
+      ],
+      "user": {
+        "id": 4
+      },
+      "blog": {
+        "id": 4
+      }
+    }
+  ],
+  "Comment": [
+    {
+      "content": "Sample comment for post 1.",
+      "date": "2023-10-01T12:00:00Z",
+      "post": {
+        "id": 0
+      }
+    },
+    {
+      "content": "Sample comment for post 2.",
+      "date": "2023-10-01T12:00:00Z",
+      "post": {
+        "id": 1
+      }
+    },
+    {
+      "content": "Sample comment for post 3.",
+      "date": "2023-10-01T12:00:00Z",
+      "post": {
+        "id": 2
+      }
+    },
+    {
+      "content": "Sample comment for post 4.",
+      "date": "2023-10-01T12:00:00Z",
+      "post": {
+        "id": 3
+      }
+    },
+    {
+      "content": "Sample comment for post 5.",
+      "date": "2023-10-01T12:00:00Z",
+      "post": {
+        "id": 4
+      }
+    }
+  ],
+  "Option": [
+    {
+      "enabled": true,
+      "name": "Option 1 Name",
+      "description": "Description for option 1."
+    },
+    {
+      "enabled": false,
+      "name": "Option 2 Name",
+      "description": "Description for option 2."
+    },
+    {
+      "enabled": true,
+      "name": "Option 3 Name",
+      "description": "Description for option 3."
+    },
+    {
+      "enabled": false,
+      "name": "Option 4 Name",
+      "description": "Description for option 4."
+    },
+    {
+      "enabled": true,
+      "name": "Option 5 Name",
+      "description": "Description for option 5."
+    }
+  ],
+  "profile": {
+    "name": "JSON Server"
+  }
+}

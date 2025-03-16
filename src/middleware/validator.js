@@ -116,6 +116,66 @@ const schemas = {
       .description('Section configuration to generate'),
     features: Joi.array().items(Joi.string()).default([])
       .description('Specific features to include in the section')
+  }),
+
+  // JDL generation schema
+  jdlGeneration: Joi.object({
+    requirements: Joi.string().required().min(10).max(5000)
+      .description('Detailed requirements for the entity model'),
+    name: Joi.string().required().min(3).max(50)
+      .description('Name for the JDL file (will be used for the file name)'),
+    options: Joi.object({
+      includeApplicationConfig: Joi.boolean().default(false)
+        .description('Whether to include application configuration in the JDL'),
+      microserviceNames: Joi.array().items(Joi.string()).default([])
+        .description('Names of microservices to define entities for'),
+      databaseType: Joi.string().valid('sql', 'mongodb', 'cassandra', 'couchbase', 'neo4j').default('sql')
+        .description('Database type to use')
+    }).default({})
+      .description('Additional options for JDL generation')
+  }),
+
+  // JDL to JSON conversion schema
+  jdlToJson: Joi.object({
+    jdlContent: Joi.string().required().messages({
+      'string.empty': 'JDL content is required',
+      'any.required': 'JDL content is required'
+    }),
+    name: Joi.string().required().messages({
+      'string.empty': 'Name is required',
+      'any.required': 'Name is required'
+    }),
+    options: Joi.object({
+      recordsPerEntity: Joi.number().integer().min(1).max(100).default(10).messages({
+        'number.base': 'Records per entity must be a number',
+        'number.integer': 'Records per entity must be an integer',
+        'number.min': 'Records per entity must be at least 1',
+        'number.max': 'Records per entity must be at most 100'
+      })
+    }).default({})
+  }),
+
+  // JDL from requirements to JSON schema
+  jdlFromRequirementsToJson: Joi.object({
+    requirements: Joi.string().required().messages({
+      'string.empty': 'Requirements are required',
+      'any.required': 'Requirements are required'
+    }),
+    name: Joi.string().required().messages({
+      'string.empty': 'Name is required',
+      'any.required': 'Name is required'
+    }),
+    jdlOptions: Joi.object({
+      databaseType: Joi.string().valid('sql', 'mongodb', 'cassandra', 'couchbase').default('sql')
+    }).default({}),
+    jsonOptions: Joi.object({
+      recordsPerEntity: Joi.number().integer().min(1).max(100).default(10).messages({
+        'number.base': 'Records per entity must be a number',
+        'number.integer': 'Records per entity must be an integer',
+        'number.min': 'Records per entity must be at least 1',
+        'number.max': 'Records per entity must be at most 100'
+      })
+    }).default({})
   })
 };
 

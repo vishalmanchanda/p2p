@@ -1,0 +1,84 @@
+// Entity definitions
+entity User {
+  username String required minlength(2) maxlength(50),
+  email String required pattern(".+@.+") minvalue("a@a"),
+  bio TextBlob optional
+}
+
+entity Blog {
+  name String required,
+  handle String required minlength(2) maxlength(50),
+  description TextBlob optional,
+  user User required,
+  createdAt ZonedDateTime required default(currentTimestamp())
+}
+
+entity Post {
+  title String required,
+  content TextBlob required minlength(1) maxlength(1000),
+  date ZonedDateTime required default(currentTimestamp()),
+  tags String[] required,
+  blog Blog required
+}
+
+entity Comment {
+  content TextBlob required minlength(1) maxlength(500),
+  date ZonedDateTime required default(currentTimestamp()),
+  post Post required
+}
+
+// Relationships
+relationship OneToMany {
+  User{blogs} to Blog{user}
+}
+
+relationship OneToMany {
+  Blog{posts} to Post{blog}
+}
+
+relationship OneToMany {
+  Post{comments} to Comment{post}
+}
+
+relationship OneToOne {
+  Blog{user} from User
+}
+
+relationship OneToOne {
+  Post{blog} from Blog
+}
+
+relationship OneToOne {
+  Comment{post} from Post
+}
+
+// Application configuration
+application {
+  jpa:
+    hibernate:
+      enable: true
+      cascade: all
+    properties:
+      hibernate.format_sql: true
+}
+
+entity Option {
+  enabled Boolean,
+  name String required,
+  description String optional,
+  service: com.example.service.PostService
+}
+
+dto {
+  UserDto {
+    username: String,
+    email: String,
+    bio: TextBlob
+  }
+}
+
+service {
+  BlogService: Blog,
+  PostService: Post,
+  CommentService: Comment
+}

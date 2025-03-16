@@ -1,220 +1,233 @@
 {
   "User": [
     {
-      "username": "user1",
-      "email": "user1@example.com",
-      "bio": "Sample bio for user 1."
+      "id": 1,
+      "username": "johndoe",
+      "email": "john.doe@example.com",
+      "bio": "I love coding and exploring new technologies."
     },
     {
-      "username": "user2",
-      "email": "user2@example.com",
-      "bio": "Sample bio for user 2."
+      "id": 2,
+      "username": "janedoe",
+      "email": "janet.doe@example.com",
+      "bio": "A passionate developer with a focus on web applications."
     },
     {
-      "username": "user3",
-      "email": "user3@example.com",
-      "bio": "Sample bio for user 3."
+      "id": 3,
+      "username": "auser123",
+      "email": "a.user.123@example.com",
+      "bio": null
     },
     {
-      "username": "user4",
-      "email": "user4@example.com",
-      "bio": "Sample bio for user 4."
+      "id": 4,
+      "username": "blogger99",
+      "email": "b.logger.99@example.com",
+      "bio": "Blogging is my favorite hobby."
     },
     {
-      "username": "user5",
-      "email": "user5@example.com",
-      "bio": "Sample bio for user 5."
+      "id": 5,
+      "username": "coder101",
+      "email": "c.oder.101@example.com",
+      "bio": "Full-stack developer with a love for problem-solving."
     }
   ],
   "Blog": [
     {
-      "name": "blog1",
-      "handle": "blog1-handle",
-      "description": "Description for blog 1.",
-      "user": {
-        "id": 0
-      },
-      "createdAt": "2023-10-01T12:00:00Z"
+      "id": 1,
+      "name": "Tech Insights Blog",
+      "handle": "techinsights",
+      "description": null,
+      "user": 1,
+      "createdAt": "2023-10-01T00:00:00Z"
     },
     {
-      "name": "blog2",
-      "handle": "blog2-handle",
-      "description": "Description for blog 2.",
-      "user": {
-        "id": 1
-      },
-      "createdAt": "2023-10-01T12:00:00Z"
+      "id": 2,
+      "name": "Dev Community Blog",
+      "handle": "devcommunity",
+      "description": "A blog for developers by developers.",
+      "user": 2,
+      "createdAt": "2023-10-01T00:00:00Z"
     },
     {
-      "name": "blog3",
-      "handle": "blog3-handle",
-      "description": "Description for blog 3.",
-      "user": {
-        "id": 2
-      },
-      "createdAt": "2023-10-01T12:00:00Z"
+      "id": 3,
+      "name": "Design Tips Blog",
+      "handle": "designTips",
+      "description": "Tips and tricks for web design.",
+      "user": 3,
+      "createdAt": "2023-10-01T00:00:00Z"
     },
     {
-      "name": "blog4",
-      "handle": "blog4-handle",
-      "description": "Description for blog 4.",
-      "user": {
-        "id": 3
-      },
-      "createdAt": "2023-10-01T12:00:00Z"
+      "id": 4,
+      "name": "Code Reviews Blog",
+      "handle": "codeReviews",
+      "description": "Everything you need to know about code reviews.",
+      "user": 4,
+      "createdAt": "2023-10-01T00:00:00Z"
     },
     {
-      "name": "blog5",
-      "handle": "blog5-handle",
-      "description": "Description for blog 5.",
-      "user": {
-        "id": 4
-      },
-      "createdAt": "2023-10-01T12:00:00Z"
+      "id": 5,
+      "name": "Startup Chronicles Blog",
+      "handle": "startupChronicles",
+      "description": "A blog for startup enthusiasts.",
+      "user": 5,
+      "createdAt": "2023-10-01T00:00:00Z"
     }
   ],
   "Post": [
     {
-      "title": "Post 1 Title",
-      "content": "Sample content for post 1.",
-      "date": "2023-10-01T12:00:00Z",
+      "id": 1,
+      "title": "The Future of Web Development",
+      "content": "Exploring the latest trends in web development.",
       "tags": [
-        "tag1",
-        "tag2"
+        "web",
+        "development"
       ],
-      "user": {
-        "id": 0
-      },
-      "blog": {
-        "id": 0
-      }
+      "date": "2023-10-02T00:00:00Z",
+      "blog": 1
     },
     {
-      "title": "Post 2 Title",
-      "content": "Sample content for post 2.",
-      "date": "2023-10-01T12:00:00Z",
+      "id": 2,
+      "title": "Mastering TypeScript",
+      "content": "A deep dive into TypeScript for modern web applications.",
       "tags": [
-        "tag1",
-        "tag3"
+        "typescript",
+        "javascript"
       ],
-      "user": {
-        "id": 1
-      },
-      "blog": {
-        "id": 1
-      }
+      "date": "2023-10-02T00:00:00Z",
+      "blog": 1
     },
     {
-      "title": "Post 3 Title",
-      "content": "Sample content for post 3.",
-      "date": "2023-10-01T12:00:00Z",
+      "id": 3,
+      "title": "UI Design Principles",
+      "content": "Essential principles for creating beautiful user interfaces.",
       "tags": [
-        "tag2",
-        "tag4"
+        "ui",
+        "design"
       ],
-      "user": {
-        "id": 2
-      },
-      "blog": {
-        "id": 2
-      }
+      "date": "2023-10-02T00:00:00Z",
+      "blog": 2
     },
     {
-      "title": "Post 4 Title",
-      "content": "Sample content for post 4.",
-      "date": "2023-10-01T12:00:00Z",
+      "id": 4,
+      "title": "Optimizing Website Performance",
+      "content": "Tips and tricks for achieving top performance.",
       "tags": [
-        "tag1",
-        "tag5"
+        "performance",
+        "web"
       ],
-      "user": {
-        "id": 3
-      },
-      "blog": {
-        "id": 3
-      }
+      "date": "2023-10-02T00:00:00Z",
+      "blog": 2
     },
     {
-      "title": "Post 5 Title",
-      "content": "Sample content for post 5.",
-      "date": "2023-10-01T12:00:00Z",
+      "id": 5,
+      "title": "Getting Started with React",
+      "content": "A beginner's guide to React development.",
       "tags": [
-        "tag3",
-        "tag6"
+        "react",
+        "javascript"
       ],
-      "user": {
-        "id": 4
-      },
-      "blog": {
-        "id": 4
-      }
+      "date": "2023-10-02T00:00:00Z",
+      "blog": 3
+    },
+    {
+      "id": 6,
+      "title": "The Art of Code Reviews",
+      "content": "Best practices for effective code reviews.",
+      "tags": [
+        "code",
+        "reviews"
+      ],
+      "date": "2023-10-03T00:00:00Z",
+      "blog": 4
+    },
+    {
+      "id": 7,
+      "title": "Building Scalable Web Applications",
+      "content": "Architecting applications for future growth.",
+      "tags": [
+        "scalability",
+        "web"
+      ],
+      "date": "2023-10-03T00:00:00Z",
+      "blog": 4
+    },
+    {
+      "id": 8,
+      "title": "Top Open Source Projects to Watch",
+      "content": "Exploring the best open source projects.",
+      "tags": [
+        "opensource",
+        "projects"
+      ],
+      "date": "2023-10-03T00:00:00Z",
+      "blog": 5
+    },
+    {
+      "id": 9,
+      "title": "Mastering Git and GitHub",
+      "content": "A comprehensive guide to version control.",
+      "tags": [
+        "git",
+        "github"
+      ],
+      "date": "2023-10-03T00:00:00Z",
+      "blog": 5
     }
   ],
   "Comment": [
     {
-      "content": "Sample comment for post 1.",
-      "date": "2023-10-01T12:00:00Z",
-      "post": {
-        "id": 0
-      }
+      "id": 1,
+      "content": "Great article on web development!",
+      "date": "2023-10-02T00:00:00Z",
+      "post": 1
     },
     {
-      "content": "Sample comment for post 2.",
-      "date": "2023-10-01T12:00:00Z",
-      "post": {
-        "id": 1
-      }
+      "id": 2,
+      "content": "I agree with the points made about TypeScript.",
+      "date": "2023-10-02T00:00:00Z",
+      "post": 2
     },
     {
-      "content": "Sample comment for post 3.",
-      "date": "2023-10-01T12:00:00Z",
-      "post": {
-        "id": 2
-      }
+      "id": 3,
+      "content": "UI design principles are essential for any project!",
+      "date": "2023-10-02T00:00:00Z",
+      "post": 3
     },
     {
-      "content": "Sample comment for post 4.",
-      "date": "2023-10-01T12:00:00Z",
-      "post": {
-        "id": 3
-      }
+      "id": 4,
+      "content": "Performance optimization is crucial for user experience.",
+      "date": "2023-10-02T00:00:00Z",
+      "post": 4
     },
     {
-      "content": "Sample comment for post 5.",
-      "date": "2023-10-01T12:00:00Z",
-      "post": {
-        "id": 4
-      }
+      "id": 5,
+      "content": "React is a fantastic framework for building interactive applications.",
+      "date": "2023-10-02T00:00:00Z",
+      "post": 5
+    },
+    {
+      "id": 6,
+      "content": "The art of code reviews is something every developer should master.",
+      "date": "2023-10-03T00:00:00Z",
+      "post": 6
+    },
+    {
+      "id": 7,
+      "content": "Building scalable web applications requires careful planning.",
+      "date": "2023-10-03T00:00:00Z",
+      "post": 7
+    },
+    {
+      "id": 8,
+      "content": "Exploring open source projects is a great way to learn and contribute!",
+      "date": "2023-10-03T00:00:00Z",
+      "post": 8
+    },
+    {
+      "id": 9,
+      "content": "Mastering Git and GitHub is essential for any developer's toolkit.",
+      "date": "2023-10-03T00:00:00Z",
+      "post": 9
     }
-  ],
-  "Option": [
-    {
-      "enabled": true,
-      "name": "Option 1 Name",
-      "description": "Description for option 1."
-    },
-    {
-      "enabled": false,
-      "name": "Option 2 Name",
-      "description": "Description for option 2."
-    },
-    {
-      "enabled": true,
-      "name": "Option 3 Name",
-      "description": "Description for option 3."
-    },
-    {
-      "enabled": false,
-      "name": "Option 4 Name",
-      "description": "Description for option 4."
-    },
-    {
-      "enabled": true,
-      "name": "Option 5 Name",
-      "description": "Description for option 5."
-    }
-  ],
-  "profile": {
-    "name": "JSON Server"
-  }
+  ]
 }

@@ -102,6 +102,7 @@ http://localhost:3000/api-docs
 - `POST /api/generate/prototype-builder` - Generate a prototype using the section-based builder
 - `POST /api/generate/jdl` - Generate JHipster Domain Language (JDL) from requirements
 - `POST /api/generate/jdl-to-json` - Convert JDL to JSON Server db.json format with mock data
+- `POST /api/generate/prototype-json-server` - Generate a complete prototype with JSON Server integration
 
 ### JDL to JSON Server Conversion
 
@@ -113,6 +114,28 @@ The API provides endpoints to convert JHipster Domain Language (JDL) to JSON Ser
 - `GET /api/generate/jdl-to-json/{name}` - Get a previously generated JSON Server db.json file
 
 The generated JSON Server files can be used with [JSON Server](https://github.com/typicode/json-server) to create a mock API for your application.
+
+### Prototype with JSON Server Integration
+
+The API provides endpoints to generate complete prototypes with JSON Server integration:
+
+- `POST /api/generate/prototype-json-server` - Generate a prototype with JSON Server integration from JDL content
+- `POST /api/generate/prototype-json-server/from-jdl-file/{jdlName}` - Generate a prototype with JSON Server integration from an existing JDL file
+- `POST /api/generate/prototype-json-server/from-requirements` - Generate a prototype with JSON Server integration from requirements
+- `POST /api/generate/prototype-json-server/start/{name}` - Start JSON Server for a previously generated prototype
+- `GET /api/generate/prototype-json-server/{name}` - Get information about a previously generated prototype
+
+The generated prototypes include:
+- A complete HTML/CSS/JS frontend in the `static` directory
+- A `db.json` file with mock data for JSON Server
+- A `data.jdl` file with the JDL entity definitions
+- A `start-server.sh` script to easily start the JSON Server
+
+To run the prototype:
+1. Navigate to the prototype directory: `cd public/your-prototype-name`
+2. Run the start script: `./start-server.sh`
+3. Or manually start JSON Server: `npx json-server db.json -p 3001 -s static`
+4. Open your browser to `http://localhost:3001`
 
 ## API Endpoints
 

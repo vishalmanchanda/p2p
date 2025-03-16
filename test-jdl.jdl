@@ -1,0 +1,37 @@
+entity Task {
+  title String required
+  description String
+  status String required
+  dueDate ZonedDateTime
+  priority String
+}
+
+entity User {
+  username String required
+  email String required
+  firstName String
+  lastName String
+}
+
+entity Project {
+  name String required
+  description String
+  startDate ZonedDateTime
+  endDate ZonedDateTime
+}
+
+relationship ManyToOne {
+  Task{assignee} to User
+}
+
+relationship ManyToOne {
+  Task{project} to Project
+}
+
+relationship OneToMany {
+  User{tasks} to Task{creator}
+}
+
+relationship OneToMany {
+  Project{tasks} to Task
+} 

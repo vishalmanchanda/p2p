@@ -167,7 +167,7 @@ The JSON should:
 
 For example, if there's a OneToMany relationship between Author and Book, each Book should have an authorId that references an existing Author id.
 
-Return ONLY the JSON content without any explanations or markdown formatting.
+Return ONLY the JSON content without any explanations or markdown formatting. Do not include backticks (\`\`\`) or any other markdown syntax.
 `;
 
     // Generate the JSON content
@@ -180,11 +180,81 @@ Return ONLY the JSON content without any explanations or markdown formatting.
     
     // Parse the generated JSON
     try {
-      return JSON.parse(result.code);
+      // Clean the code to remove any markdown formatting
+      let cleanedCode = result.code;
+      
+      // Remove markdown code block syntax if present
+      cleanedCode = cleanedCode.replace(/^```json\s*/i, '').replace(/\s*```$/i, '');
+      
+      // Remove any backticks at the beginning or end
+      cleanedCode = cleanedCode.replace(/^`+|`+$/g, '');
+      
+      console.log('Cleaned JSON code:', cleanedCode.substring(0, 100) + '...');
+      
+      return JSON.parse(cleanedCode);
     } catch (error) {
       console.error('Error parsing generated JSON:', error);
-      throw new ApiError('Failed to parse generated JSON', 500, 'JSON_PARSE_ERROR');
+      
+      // Fallback to generating a simple JSON structure
+      console.log('Falling back to simple JSON structure');
+      const fallbackJson = this._generateFallbackJson(entities, options?.recordsPerEntity || 10);
+      return fallbackJson;
     }
+  }
+  
+  /**
+   * Generate a fallback JSON structure when parsing fails
+   * @param {Array} entities - Array of entity information
+   * @param {Number} recordsPerEntity - Number of records to generate per entity
+   * @returns {Object} - Simple JSON structure
+   */
+  _generateFallbackJson(entities, recordsPerEntity) {
+    const result = {};
+    
+    entities.forEach(entity => {
+      const records = [];
+      
+      for (let i = 1; i <= recordsPerEntity; i++) {
+        const record = { id: i };
+        
+        entity.fields.forEach(field => {
+          switch (field.type.toLowerCase()) {
+            case 'string':
+              record[field.name] = `${entity.name} ${field.name} ${i}`;
+              break;
+            case 'integer':
+            case 'int':
+            case 'long':
+              record[field.name] = i * 10;
+              break;
+            case 'float':
+            case 'double':
+            case 'decimal':
+              record[field.name] = i * 10.5;
+              break;
+            case 'boolean':
+              record[field.name] = i % 2 === 0;
+              break;
+            case 'date':
+            case 'localdate':
+              record[field.name] = new Date(2023, 0, i).toISOString().split('T')[0];
+              break;
+            case 'instant':
+            case 'zoneddatetime':
+              record[field.name] = new Date(2023, 0, i).toISOString();
+              break;
+            default:
+              record[field.name] = `${field.name} ${i}`;
+          }
+        });
+        
+        records.push(record);
+      }
+      
+      result[entity.name] = records;
+    });
+    
+    return result;
   }
   
   /**
@@ -208,7 +278,7 @@ The JSON should:
 
 For example, if there's a OneToMany relationship between Author and Book, each Book should have an authorId that references an existing Author id.
 
-Return ONLY the JSON content without any explanations or markdown formatting.
+Return ONLY the JSON content without any explanations or markdown formatting. Do not include backticks (\`\`\`) or any other markdown syntax.
 `;
 
     // Generate the JSON content
@@ -221,10 +291,31 @@ Return ONLY the JSON content without any explanations or markdown formatting.
     
     // Parse the generated JSON
     try {
-      return JSON.parse(result.code);
+      // Clean the code to remove any markdown formatting
+      let cleanedCode = result.code;
+      
+      // Remove markdown code block syntax if present
+      cleanedCode = cleanedCode.replace(/^```json\s*/i, '').replace(/\s*```$/i, '');
+      
+      // Remove any backticks at the beginning or end
+      cleanedCode = cleanedCode.replace(/^`+|`+$/g, '');
+      
+      console.log('Cleaned JSON code:', cleanedCode.substring(0, 100) + '...');
+      
+      return JSON.parse(cleanedCode);
     } catch (error) {
       console.error('Error parsing generated JSON:', error);
-      throw new ApiError('Failed to parse generated JSON', 500, 'JSON_PARSE_ERROR');
+      
+      // Try to parse the JDL to extract entity information
+      try {
+        const entities = await this._parseJdl(jdlContent);
+        console.log('Falling back to simple JSON structure based on parsed JDL');
+        const fallbackJson = this._generateFallbackJson(entities, options?.recordsPerEntity || 10);
+        return fallbackJson;
+      } catch (parseError) {
+        console.error('Error parsing JDL for fallback:', parseError);
+        throw new ApiError('Failed to parse generated JSON', 500, 'JSON_PARSE_ERROR');
+      }
     }
   }
 }

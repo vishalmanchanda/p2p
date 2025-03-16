@@ -176,6 +176,98 @@ const schemas = {
         'number.max': 'Records per entity must be at most 100'
       })
     }).default({})
+  }),
+
+  // Prototype JSON Server schema
+  prototypeJsonServer: Joi.object({
+    jdlContent: Joi.string().required().messages({
+      'string.empty': 'JDL content is required',
+      'any.required': 'JDL content is required'
+    }),
+    scenario: Joi.string().required().min(10).max(1000).messages({
+      'string.empty': 'Scenario is required',
+      'string.min': 'Scenario must be at least 10 characters',
+      'string.max': 'Scenario must be at most 1000 characters',
+      'any.required': 'Scenario is required'
+    }),
+    name: Joi.string().required().min(3).max(50).messages({
+      'string.empty': 'Name is required',
+      'string.min': 'Name must be at least 3 characters',
+      'string.max': 'Name must be at most 50 characters',
+      'any.required': 'Name is required'
+    }),
+    options: Joi.object({
+      jsonOptions: Joi.object({
+        recordsPerEntity: Joi.number().integer().min(1).max(100).default(10).messages({
+          'number.base': 'Records per entity must be a number',
+          'number.integer': 'Records per entity must be an integer',
+          'number.min': 'Records per entity must be at least 1',
+          'number.max': 'Records per entity must be at most 100'
+        })
+      }).default({}),
+      features: Joi.array().items(Joi.string()).default([])
+        .description('Specific features to include in the prototype')
+    }).default({})
+  }),
+
+  // Prototype JSON Server from JDL file schema
+  prototypeJsonServerFromJdl: Joi.object({
+    scenario: Joi.string().required().min(10).max(1000).messages({
+      'string.empty': 'Scenario is required',
+      'string.min': 'Scenario must be at least 10 characters',
+      'string.max': 'Scenario must be at most 1000 characters',
+      'any.required': 'Scenario is required'
+    }),
+    name: Joi.string().min(3).max(50).messages({
+      'string.min': 'Name must be at least 3 characters',
+      'string.max': 'Name must be at most 50 characters'
+    }),
+    options: Joi.object({
+      jsonOptions: Joi.object({
+        recordsPerEntity: Joi.number().integer().min(1).max(100).default(10).messages({
+          'number.base': 'Records per entity must be a number',
+          'number.integer': 'Records per entity must be an integer',
+          'number.min': 'Records per entity must be at least 1',
+          'number.max': 'Records per entity must be at most 100'
+        })
+      }).default({}),
+      features: Joi.array().items(Joi.string()).default([])
+        .description('Specific features to include in the prototype')
+    }).default({})
+  }),
+
+  // Prototype JSON Server from requirements schema
+  prototypeJsonServerFromRequirements: Joi.object({
+    requirements: Joi.string().required().min(10).max(5000).messages({
+      'string.empty': 'Requirements are required',
+      'string.min': 'Requirements must be at least 10 characters',
+      'string.max': 'Requirements must be at most 5000 characters',
+      'any.required': 'Requirements are required'
+    }),
+    scenario: Joi.string().required().min(10).max(1000).messages({
+      'string.empty': 'Scenario is required',
+      'string.min': 'Scenario must be at least 10 characters',
+      'string.max': 'Scenario must be at most 1000 characters',
+      'any.required': 'Scenario is required'
+    }),
+    name: Joi.string().required().min(3).max(50).messages({
+      'string.empty': 'Name is required',
+      'string.min': 'Name must be at least 3 characters',
+      'string.max': 'Name must be at most 50 characters',
+      'any.required': 'Name is required'
+    }),
+    options: Joi.object({
+      jsonOptions: Joi.object({
+        recordsPerEntity: Joi.number().integer().min(1).max(100).default(10).messages({
+          'number.base': 'Records per entity must be a number',
+          'number.integer': 'Records per entity must be an integer',
+          'number.min': 'Records per entity must be at least 1',
+          'number.max': 'Records per entity must be at most 100'
+        })
+      }).default({}),
+      features: Joi.array().items(Joi.string()).default([])
+        .description('Specific features to include in the prototype')
+    }).default({})
   })
 };
 

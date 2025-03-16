@@ -847,6 +847,250 @@ const options = {
             }
           }
         },
+        PrototypeJsonServerRequest: {
+          type: 'object',
+          required: ['jdlContent', 'scenario', 'name'],
+          properties: {
+            jdlContent: {
+              type: 'string',
+              description: 'JDL content to use for generating the prototype',
+              example: 'entity Blog { name String required }'
+            },
+            scenario: {
+              type: 'string',
+              description: 'Detailed description of the scenario for the prototype',
+              example: 'A blog application with user management, post creation, and commenting features'
+            },
+            name: {
+              type: 'string',
+              description: 'Name for the prototype (will be used for the directory name)',
+              example: 'blog-app'
+            },
+            options: {
+              type: 'object',
+              properties: {
+                jsonOptions: {
+                  type: 'object',
+                  properties: {
+                    recordsPerEntity: {
+                      type: 'integer',
+                      description: 'Number of records to generate per entity',
+                      default: 10,
+                      example: 5
+                    }
+                  }
+                },
+                features: {
+                  type: 'array',
+                  description: 'Specific features to include in the prototype',
+                  items: {
+                    type: 'string'
+                  },
+                  example: ['Dark mode', 'Responsive design', 'Search functionality']
+                }
+              }
+            }
+          }
+        },
+        PrototypeJsonServerFromJdlRequest: {
+          type: 'object',
+          required: ['scenario'],
+          properties: {
+            scenario: {
+              type: 'string',
+              description: 'Detailed description of the scenario for the prototype',
+              example: 'A blog application with user management, post creation, and commenting features'
+            },
+            name: {
+              type: 'string',
+              description: 'Name for the prototype (will be used for the directory name)',
+              example: 'blog-app'
+            },
+            options: {
+              type: 'object',
+              properties: {
+                jsonOptions: {
+                  type: 'object',
+                  properties: {
+                    recordsPerEntity: {
+                      type: 'integer',
+                      description: 'Number of records to generate per entity',
+                      default: 10,
+                      example: 5
+                    }
+                  }
+                },
+                features: {
+                  type: 'array',
+                  description: 'Specific features to include in the prototype',
+                  items: {
+                    type: 'string'
+                  },
+                  example: ['Dark mode', 'Responsive design', 'Search functionality']
+                }
+              }
+            }
+          }
+        },
+        PrototypeJsonServerFromRequirementsRequest: {
+          type: 'object',
+          required: ['requirements', 'scenario', 'name'],
+          properties: {
+            requirements: {
+              type: 'string',
+              description: 'Detailed requirements for the entity model',
+              example: 'Create a blog application with User, Blog, Post, and Comment entities. Users have a username, email, and bio. Blogs have a name, handle, and description. Posts have a title, content, date, and tags. Comments have content and a date.'
+            },
+            scenario: {
+              type: 'string',
+              description: 'Detailed description of the scenario for the prototype',
+              example: 'A blog application with user management, post creation, and commenting features'
+            },
+            name: {
+              type: 'string',
+              description: 'Name for the prototype (will be used for the directory name)',
+              example: 'blog-app'
+            },
+            options: {
+              type: 'object',
+              properties: {
+                jsonOptions: {
+                  type: 'object',
+                  properties: {
+                    recordsPerEntity: {
+                      type: 'integer',
+                      description: 'Number of records to generate per entity',
+                      default: 10,
+                      example: 5
+                    }
+                  }
+                },
+                features: {
+                  type: 'array',
+                  description: 'Specific features to include in the prototype',
+                  items: {
+                    type: 'string'
+                  },
+                  example: ['Dark mode', 'Responsive design', 'Search functionality']
+                }
+              }
+            }
+          }
+        },
+        PrototypeJsonServerResponse: {
+          type: 'object',
+          properties: {
+            success: {
+              type: 'boolean',
+              example: true
+            },
+            data: {
+              type: 'object',
+              properties: {
+                message: {
+                  type: 'string',
+                  example: 'Prototype with JSON Server integration for "blog-app" has been generated successfully.'
+                },
+                name: {
+                  type: 'string',
+                  example: 'blog-app'
+                },
+                scenario: {
+                  type: 'string',
+                  example: 'A blog application with user management, post creation, and commenting features'
+                },
+                entities: {
+                  type: 'array',
+                  items: {
+                    type: 'string'
+                  },
+                  example: ['User', 'Blog', 'Post', 'Comment']
+                },
+                directoryPath: {
+                  type: 'string',
+                  example: '/path/to/public/blog-app'
+                },
+                staticPath: {
+                  type: 'string',
+                  example: '/path/to/public/blog-app/static'
+                },
+                jdlPath: {
+                  type: 'string',
+                  example: '/path/to/public/blog-app/data.jdl'
+                },
+                dbJsonPath: {
+                  type: 'string',
+                  example: '/path/to/public/blog-app/db.json'
+                },
+                indexHtmlPath: {
+                  type: 'string',
+                  example: '/path/to/public/blog-app/static/index.html'
+                },
+                startScriptPath: {
+                  type: 'string',
+                  example: '/path/to/public/blog-app/start-server.sh'
+                },
+                url: {
+                  type: 'string',
+                  example: '/public/blog-app/static/index.html'
+                },
+                startCommand: {
+                  type: 'string',
+                  example: 'cd /path/to/public/blog-app && npx json-server db.json -p 3001 -s static'
+                }
+              }
+            }
+          }
+        },
+        PrototypeJsonServerInfo: {
+          type: 'object',
+          properties: {
+            success: {
+              type: 'boolean',
+              example: true
+            },
+            data: {
+              type: 'object',
+              properties: {
+                name: {
+                  type: 'string',
+                  example: 'blog-app'
+                },
+                directoryPath: {
+                  type: 'string',
+                  example: '/path/to/public/blog-app'
+                },
+                jdlPath: {
+                  type: 'string',
+                  example: '/path/to/public/blog-app/data.jdl'
+                },
+                dbJsonPath: {
+                  type: 'string',
+                  example: '/path/to/public/blog-app/db.json'
+                },
+                indexHtmlPath: {
+                  type: 'string',
+                  example: '/path/to/public/blog-app/static/index.html'
+                },
+                url: {
+                  type: 'string',
+                  example: '/public/blog-app/static/index.html'
+                },
+                startCommand: {
+                  type: 'string',
+                  example: 'cd /path/to/public/blog-app && npx json-server db.json -p 3001 -s static'
+                },
+                entities: {
+                  type: 'array',
+                  items: {
+                    type: 'string'
+                  },
+                  example: ['User', 'Blog', 'Post', 'Comment']
+                }
+              }
+            }
+          }
+        },
       },
       responses: {
         BadRequest: {

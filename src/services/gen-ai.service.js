@@ -36,6 +36,14 @@ class GenAIService {
       this.apiKey = process.env.DEEPSEEK_API_KEY;
       this.apiUrl = process.env.DEEPSEEK_API_URL;
       this.model = process.env.DEEPSEEK_MODEL;
+      
+      // Debug log
+      console.log('DeepSeek API URL:', this.apiUrl);
+      
+      // Ensure the URL is properly formatted
+      if (this.apiUrl && !this.apiUrl.endsWith('/')) {
+        this.apiUrl = this.apiUrl + '/';
+      }
     } else if (llmName === 'ollama') {
       this.apiKey = process.env.OLLAMA_API_KEY;
       this.apiUrl = process.env.OLLAMA_API_URL;

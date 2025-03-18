@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurable Navbar Prototype</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="bg-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <div class="font-semibold text-xl text-indigo-600">My Prototype</div>
+                    <div class="hidden md:block">
+                        <div class="ml-10 flex items-baseline space-x-4" id="menu">
+                            </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto py-8">
+        <iframe id="contentFrame" src="home.html" width="100%" height="1000px" style="border:1px solid #ccc;"></iframe>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            // Configuration for the menu options
+            const menuConfig = [
+                { name: 'Home', icon: 'fa-home', url: 'home.html' },
+                { name: 'Entities', icon: 'fa-file', url: 'crud.html' },                
+                // Add more menu items here
+            ];
+
+            const menuContainer = $('#menu');
+            const contentFrame = $('#contentFrame');
+
+            // Function to load content into the iframe
+            function loadContent(url) {
+                contentFrame.attr('src', url);
+            }
+
+            // Generate the menu items
+            $.each(menuConfig, function(index, item) {
+                const menuItem = $('<a href="#" class="text-gray-600 hover:bg-gray-100 px-3 py-2 rounded-md text-sm font-medium"></a>');
+                menuItem.html(`<i class="fas ${item.icon} mr-2"></i>${item.name}`);
+                menuItem.on('click', function(e) {
+                    e.preventDefault();
+                    loadContent(item.url);
+                    // Optionally add active class styling to the clicked menu item
+                    $('.menu-item').removeClass('bg-indigo-500 text-white');
+                    $(this).addClass('bg-indigo-500 text-white');
+                }).addClass('menu-item'); // Add a class for styling
+
+                menuContainer.append(menuItem);
+                if (index === 0) {
+                    menuItem.addClass('bg-indigo-500 text-white'); // Highlight the first item as active initially
+                }
+            });
+        });
+    </script>
+</body>
+</html>

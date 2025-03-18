@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entity Management</title>
+  
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <style>
+    body {
+      background-color: #f3f4f6;
+    }
+    .page-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    .tab-container {
+      background-color: white;
+      border-radius: 0.5rem;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <header class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900">Entity Management</h1>
+      <p class="text-gray-600 mt-2">A professional CRUD interface for your Entities</p>
+    </header>
+    
+    <!-- Tabs - Will be populated dynamically -->
+    <div class="mb-6">
+      <div class="border-b border-gray-200">
+        <nav class="-mb-px flex space-x-8">
+          <!-- Tabs will be inserted here by JavaScript -->
+        </nav>
+      </div>
+    </div>
+    
+    <!-- Tab Content - Will be populated dynamically -->
+    <!-- Tab content containers will be inserted here by JavaScript -->
+  </div>
+  
+  <!-- CRUD Generator Script -->
+  <script src="crud.js"></script>
+  <script src="entity-configs.js"></script>
+  <script src="entities.js"></script>
+</body>
+</html>

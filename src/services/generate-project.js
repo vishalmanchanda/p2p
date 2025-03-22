@@ -168,7 +168,7 @@ async function generateEntityConfigs(projectPath, requirementsText) {
 
 The output should be in this format:
 const entityConfig = {
-  entityName: 'entityNamePlural',
+  entityName: 'entityNamePlural in lowercase',
   title: 'Entity Title',
   apiBaseUrl: 'http://localhost:3002',
   itemsPerPage: 10,
@@ -228,9 +228,9 @@ module.exports = {
 
 // generate project
 async function main() { 
-  const projectName = 'p1';
+  const projectName = 'p2';
   const requirementsText1 = 'generate a project with a single entity called "User" with the following fields:  name, email, password';
-  const requirementsText2 = 'generate a project with a two entities called "Product" and "Order" with the  fields as :  name, price, description for Product and  orderDate, totalAmount for Order';
+  const requirementsText2 = 'generate a project with a two entities called "Product" and "Order" with the  fields as :  productId, productName, price, description for Product and  orderId,orderDate, totalAmount, status, customerName  for Order';
   const projectPath = await generateProject(projectName, requirementsText2);
   console.log(projectPath);
   // // generate entity configs

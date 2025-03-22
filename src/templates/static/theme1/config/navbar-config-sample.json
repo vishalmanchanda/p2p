@@ -1,0 +1,130 @@
+{
+    "brand": {
+        "url": "index.html",
+        "logo": "images/logo.png",
+        "alt": "logo"
+    },
+    "menus": [
+        {
+            "title": "Home Page",
+            "url": "#",
+            "isDropdown": true,
+            "active": true,
+            "icon": "ti-angle-down",
+            "submenus": [
+                {
+                    "title": "Homepage",
+                    "url": "index.html",
+                    "id": "nav-homepage"
+                },
+                {
+                    "title": "Homepage 2",
+                    "url": "homepage-2.html",
+                    "id": "nav-homepage-2"
+                },
+                {
+                    "title": "Homepage 3",
+                    "url": "homepage-3.html",
+                    "id": "nav-homepage-3"
+                },
+                {
+                    "title": "Sub Menu",
+                    "url": "#!",
+                    "id": "dropdown0301",
+                    "isSubmenu": true,
+                    "submenus": [
+                        {
+                            "title": "Submenu 11",
+                            "url": "index.html"
+                        },
+                        {
+                            "title": "Submenu 12",
+                            "url": "index.html"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "title": "Pages",
+            "url": "#",
+            "isDropdown": true,
+            "varname": "pages",
+            "icon": "ti-angle-down",
+            "submenus": [
+                {
+                    "title": "Team",
+                    "url": "team.html",
+                    "varname": "team"
+                },
+                {
+                    "title": "Career",
+                    "url": "career.html",
+                    "varname": "career"
+                },
+                {
+                    "title": "Blog",
+                    "url": "blog.html",
+                    "varname": "blog"
+                },
+                {
+                    "title": "Blog Single",
+                    "url": "blog-single.html",
+                    "varname": "blogSingle"
+                },
+                {
+                    "title": "Privacy",
+                    "url": "privacy-policy.html",
+                    "varname": "privacy"
+                },
+                {
+                    "title": "FAQ",
+                    "url": "FAQ.html",
+                    "varname": "faq"
+                },
+                {
+                    "title": "Sign In",
+                    "url": "sign-in.html"
+                },
+                {
+                    "title": "Sign Up",
+                    "url": "sign-up.html"
+                },
+                {
+                    "title": "404",
+                    "url": "404.html"
+                },
+                {
+                    "title": "Coming Soon",
+                    "url": "comming-soon.html"
+                },
+                {
+                    "title": "Sub Menu",
+                    "url": "#!",
+                    "id": "dropdown0501",
+                    "isSubmenu": true,
+                    "submenus": [
+                        {
+                            "title": "Submenu 21",
+                            "url": "index.html"
+                        },
+                        {
+                            "title": "Submenu 22",
+                            "url": "index.html"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "title": "About",
+            "url": "about.html",
+            "varname": "about"
+        },
+        {
+            "title": "Contact",
+            "url": "contact.html",
+            "varname": "contact"
+        }
+    ]
+}

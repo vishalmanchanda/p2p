@@ -1,72 +1,445 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Configurable Navbar Prototype</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <style>
-        body {
-            font-family: sans-serif;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Theme Showcase - Choose Your Style</title>
+  
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  
+  <style>
+    :root {
+      --primary-color: #6366f1;
+      --secondary-color: #4f46e5;
+      --dark-color: #1e293b;
+      --light-color: #f8fafc;
+      --success-color: #10b981;
+      --info-color: #0ea5e9;
+      --warning-color: #f59e0b;
+      --danger-color: #ef4444;
+    }
+    
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f8f9fa;
+      color: var(--dark-color);
+    }
+    
+    /* Header Styles */
+    .showcase-header {
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      padding: 6rem 0;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .showcase-header .container {
+      position: relative;
+      z-index: 2;
+    }
+    
+    .showcase-header::before {
+      content: '';
+      position: absolute;
+      top: -50px;
+      right: -50px;
+      background-image: url('https://images.pexels.com/photos/326501/pexels-photo-326501.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260');
+      background-size: cover;
+      opacity: 0.2;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+    
+    .header-title {
+      font-size: 3.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+    
+    .header-subtitle {
+      font-size: 1.25rem;
+      margin-bottom: 2rem;
+      max-width: 700px;
+    }
+    
+    /* Theme Card Styles */
+    .theme-card {
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+      margin-bottom: 30px;
+      background-color: white;
+      border: none;
+      height: 100%;
+    }
+    
+    .theme-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+    }
+    
+    .theme-card img {
+      height: 250px;
+      object-fit: cover;
+      width: 100%;
+      transition: all 0.5s ease;
+    }
+    
+    .theme-card:hover img {
+      transform: scale(1.05);
+    }
+    
+    .theme-card .card-body {
+      padding: 1.5rem;
+    }
+    
+    .theme-badge {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      z-index: 10;
+    }
+    
+    .theme-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    
+    .theme-description {
+      color: #64748b;
+      margin-bottom: 1.5rem;
+    }
+    
+    .theme-features {
+      margin-bottom: 1.5rem;
+    }
+    
+    .theme-features li {
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+    }
+    
+    .theme-features .feature-icon {
+      color: var(--success-color);
+      margin-right: 0.5rem;
+    }
+    
+    .theme-btn {
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      border: none;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 50px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    
+    .theme-btn:hover {
+      background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(99, 102, 241, 0.4);
+    }
+    
+    /* Footer Styles */
+    .footer {
+      background-color: var(--dark-color);
+      color: white;
+      padding: 3rem 0;
+    }
+    
+    .footer a {
+      color: #a5b4fc;
+      text-decoration: none;
+    }
+    
+    .footer a:hover {
+      color: white;
+    }
+    
+    /* Animation */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .animated {
+      animation: fadeIn 0.6s ease-out forwards;
+    }
+    
+    .delay-1 { animation-delay: 0.2s; }
+    .delay-2 { animation-delay: 0.4s; }
+    .delay-3 { animation-delay: 0.6s; }
+    
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+      .header-title {
+        font-size: 2.5rem;
+      }
+      
+      .theme-card img {
+        height: 200px;
+      }
+    }
+  </style>
+  
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="bg-gray-100 min-h-screen">
-    <nav class="bg-white shadow-md">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center">
-                    <div class="font-semibold text-xl text-indigo-600">My Prototype</div>
-                    <div class="hidden md:block">
-                        <div class="ml-10 flex items-baseline space-x-4" id="menu">
-                            </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <div class="container mx-auto py-8">
-        <iframe id="contentFrame" src="home.html" width="100%" height="1000px" style="border:1px solid #ccc;"></iframe>
+<body>
+  <!-- Header -->
+  <header class="showcase-header">
+    <div class="container text-center">
+      <h1 class="header-title animated">Choose Your Perfect Theme</h1>
+      <p class="header-subtitle mx-auto animated delay-1">Explore our professionally designed themes to power your web applications. Each theme offers unique features and styling to match your brand.</p>
+      <a href="#themes" class="btn theme-btn btn-lg animated delay-2">
+        <i class="fas fa-palette me-2"></i>Browse Themes
+      </a>
     </div>
+  </header>
 
-    <script>
-        $(document).ready(function() {
-            // Configuration for the menu options
-            const menuConfig = [
-                { name: 'Home', icon: 'fa-home', url: 'home.html' },
-                { name: 'Entities', icon: 'fa-file', url: 'crud.html' },                
-                // Add more menu items here
-            ];
+  <!-- Main Content -->
+  <section class="py-5" id="themes">
+    <div class="container py-4">
+      <div class="row mb-5">
+        <div class="col-lg-6 mx-auto text-center">
+          <h2 class="fw-bold mb-3">Available Themes</h2>
+          <p class="text-muted">Select the theme that best suits your project needs and style preferences</p>
+        </div>
+      </div>
+      
+      <div class="row">
+        <!-- Theme 0 Card -->
+        <div class="col-md-6 col-lg-4 mb-4 animated delay-1">
+          <div class="theme-card">
+            <span class="badge bg-primary theme-badge">Modern</span>
+            <img src="https://images.pexels.com/photos/1029757/pexels-photo-1029757.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" alt="Theme 0 Preview" class="card-img-top">
+            <div class="card-body">
+              <h3 class="theme-title">Theme 0: Sleek</h3>
+              <p class="theme-description">A clean, modern design with a focus on minimalism and usability. Perfect for business and professional applications.</p>
+              <ul class="list-unstyled theme-features">
+                <li><i class="fas fa-check-circle feature-icon"></i> Responsive design</li>
+                <li><i class="fas fa-check-circle feature-icon"></i> Modern UI components</li>
+                <li><i class="fas fa-check-circle feature-icon"></i> Clean typography</li>
+              </ul>
+              <a href="theme0/index.html" class="btn theme-btn w-100">
+                <i class="fas fa-eye me-2"></i>View Theme
+              </a>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Theme 1 Card -->
+        <div class="col-md-6 col-lg-4 mb-4 animated delay-2">
+          <div class="theme-card">
+            <span class="badge bg-success theme-badge">Featured</span>
+            <img src="https://images.pexels.com/photos/196645/pexels-photo-196645.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" alt="Theme 1 Preview" class="card-img-top">
+            <div class="card-body">
+              <h3 class="theme-title">Theme 1: Vibrant</h3>
+              <p class="theme-description">An energetic and colorful theme with bold elements. Ideal for creative agencies and startups.</p>
+              <ul class="list-unstyled theme-features">
+                <li><i class="fas fa-check-circle feature-icon"></i> Vibrant color scheme</li>
+                <li><i class="fas fa-check-circle feature-icon"></i> Interactive elements</li>
+                <li><i class="fas fa-check-circle feature-icon"></i> Creative animations</li>
+              </ul>
+              <a href="theme1/index.html" class="btn theme-btn w-100">
+                <i class="fas fa-eye me-2"></i>View Theme
+              </a>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Coming Soon Card -->
+        <div class="col-md-6 col-lg-4 mb-4 animated delay-3">
+          <div class="theme-card">
+            <span class="badge bg-warning theme-badge">Coming Soon</span>
+            <img src="https://images.pexels.com/photos/943096/pexels-photo-943096.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" alt="Coming Soon" class="card-img-top">
+            <div class="card-body">
+              <h3 class="theme-title">Theme 2: Enterprise</h3>
+              <p class="theme-description">A robust theme designed for enterprise applications with advanced features and data visualization.</p>
+              <ul class="list-unstyled theme-features">
+                <li><i class="fas fa-check-circle feature-icon"></i> Enterprise-grade components</li>
+                <li><i class="fas fa-check-circle feature-icon"></i> Advanced data tables</li>
+                <li><i class="fas fa-check-circle feature-icon"></i> Comprehensive dashboard</li>
+              </ul>
+              <button class="btn btn-secondary w-100" disabled>
+                <i class="fas fa-clock me-2"></i>Coming Soon
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Features Section -->
+  <section class="py-5 bg-light">
+    <div class="container py-4">
+      <div class="row mb-5">
+        <div class="col-lg-6 mx-auto text-center">
+          <h2 class="fw-bold mb-3">Common Features</h2>
+          <p class="text-muted">All our themes include these powerful features to enhance your web application</p>
+        </div>
+      </div>
+      
+      <div class="row g-4">
+        <!-- Feature 1 -->
+        <div class="col-md-6 col-lg-3">
+          <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center p-4">
+              <div class="rounded-circle bg-primary bg-opacity-10 p-3 d-inline-flex mb-3">
+                <i class="fas fa-mobile-alt text-primary fa-2x"></i>
+              </div>
+              <h4 class="card-title">Fully Responsive</h4>
+              <p class="card-text text-muted">Looks great on any device, from mobile phones to desktop monitors.</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Feature 2 -->
+        <div class="col-md-6 col-lg-3">
+          <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center p-4">
+              <div class="rounded-circle bg-success bg-opacity-10 p-3 d-inline-flex mb-3">
+                <i class="fas fa-cogs text-success fa-2x"></i>
+              </div>
+              <h4 class="card-title">Customizable</h4>
+              <p class="card-text text-muted">Easy to customize with modular components and variable-based styling.</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Feature 3 -->
+        <div class="col-md-6 col-lg-3">
+          <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center p-4">
+              <div class="rounded-circle bg-info bg-opacity-10 p-3 d-inline-flex mb-3">
+                <i class="fas fa-tachometer-alt text-info fa-2x"></i>
+              </div>
+              <h4 class="card-title">Optimized</h4>
+              <p class="card-text text-muted">Performance-optimized with fast load times and efficient code.</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Feature 4 -->
+        <div class="col-md-6 col-lg-3">
+          <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center p-4">
+              <div class="rounded-circle bg-warning bg-opacity-10 p-3 d-inline-flex mb-3">
+                <i class="fas fa-shield-alt text-warning fa-2x"></i>
+              </div>
+              <h4 class="card-title">Secure</h4>
+              <p class="card-text text-muted">Built with security best practices to protect your application.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-4 mb-4 mb-lg-0">
+          <h5 class="text-uppercase mb-4">Theme Gallery</h5>
+          <p>Your gateway to beautiful, functional web application themes. Choose the perfect design to enhance your user experience.</p>
+        </div>
+        <div class="col-lg-2 col-md-6 mb-4 mb-lg-0">
+          <h5 class="text-uppercase mb-4">Themes</h5>
+          <ul class="list-unstyled">
+            <li class="mb-2"><a href="theme0/index.html">Theme 0: Sleek</a></li>
+            <li class="mb-2"><a href="theme1/index.html">Theme 1: Vibrant</a></li>
+            <li class="mb-2"><a href="#" class="text-muted">Theme 2: Enterprise</a></li>
+          </ul>
+        </div>
+        <div class="col-lg-2 col-md-6 mb-4 mb-lg-0">
+          <h5 class="text-uppercase mb-4">Resources</h5>
+          <ul class="list-unstyled">
+            <li class="mb-2"><a href="#">Documentation</a></li>
+            <li class="mb-2"><a href="#">Customization Guide</a></li>
+            <li class="mb-2"><a href="#">Support</a></li>
+          </ul>
+        </div>
+        <div class="col-lg-4">
+          <h5 class="text-uppercase mb-4">Newsletter</h5>
+          <p>Subscribe to our newsletter for updates on new themes and features.</p>
+          <div class="input-group mb-3">
+            <input type="email" class="form-control" placeholder="Email address" aria-label="Email address">
+            <button class="btn theme-btn" type="button">Subscribe</button>
+          </div>
+        </div>
+      </div>
+      <hr class="my-4 bg-white opacity-25">
+      <div class="row align-items-center">
+        <div class="col-md-7 text-center text-md-start">
+          <p class="small mb-0">&copy; 2023 Theme Gallery. All rights reserved.</p>
+        </div>
+        <div class="col-md-5">
+          <ul class="list-inline text-center text-md-end mb-0">
+            <li class="list-inline-item"><a href="#"><i class="fab fa-github fa-lg mx-2"></i></a></li>
+            <li class="list-inline-item"><a href="#"><i class="fab fa-twitter fa-lg mx-2"></i></a></li>
+            <li class="list-inline-item"><a href="#"><i class="fab fa-linkedin fa-lg mx-2"></i></a></li>
+            <li class="list-inline-item"><a href="#"><i class="fab fa-instagram fa-lg mx-2"></i></a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </footer>
 
-            const menuContainer = $('#menu');
-            const contentFrame = $('#contentFrame');
-
-            // Function to load content into the iframe
-            function loadContent(url) {
-                contentFrame.attr('src', url);
-            }
-
-            // Generate the menu items
-            $.each(menuConfig, function(index, item) {
-                const menuItem = $('<a href="#" class="text-gray-600 hover:bg-gray-100 px-3 py-2 rounded-md text-sm font-medium"></a>');
-                menuItem.html(`<i class="fas ${item.icon} mr-2"></i>${item.name}`);
-                menuItem.on('click', function(e) {
-                    e.preventDefault();
-                    loadContent(item.url);
-                    // Optionally add active class styling to the clicked menu item
-                    $('.menu-item').removeClass('bg-indigo-500 text-white');
-                    $(this).addClass('bg-indigo-500 text-white');
-                }).addClass('menu-item'); // Add a class for styling
-
-                menuContainer.append(menuItem);
-                if (index === 0) {
-                    menuItem.addClass('bg-indigo-500 text-white'); // Highlight the first item as active initially
-                }
-            });
+  <!-- Bootstrap & JavaScript -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        
+        document.querySelector(this.getAttribute('href')).scrollIntoView({
+          behavior: 'smooth'
         });
-    </script>
+      });
+    });
+    
+    // Initialize animations on scroll
+    document.addEventListener('DOMContentLoaded', function() {
+      const animatedElements = document.querySelectorAll('.animated');
+      
+      // Apply initial animations
+      animatedElements.forEach(element => {
+        element.style.opacity = '0';
+      });
+      
+      // Function to check if element is in viewport
+      function isInViewport(element) {
+        const rect = element.getBoundingClientRect();
+        return (
+          rect.top <= (window.innerHeight || document.documentElement.clientHeight) &&
+          rect.bottom >= 0
+        );
+      }
+      
+      // Function to handle scroll animation
+      function handleScrollAnimation() {
+        animatedElements.forEach(element => {
+          if (isInViewport(element) && element.style.opacity === '0') {
+            element.style.opacity = '1';
+          }
+        });
+      }
+      
+      // Initial check and event listener
+      handleScrollAnimation();
+      window.addEventListener('scroll', handleScrollAnimation);
+    });
+  </script>
 </body>
 </html>

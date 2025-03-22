@@ -1,0 +1,40 @@
+{
+    "brand": {
+        "url": "index.html",
+        "logo": "images/logo.png",
+        "alt": "logo"
+    },
+    "menus": [
+        {
+            "title": "Home",
+            "url": "index.html",
+            "varname": "home",
+            "active": true
+        },
+        {
+            "title": "Entities",
+            "url": "crud.html",
+            "varname": "entities"
+        },
+        {
+            "title": "Showcases",
+            "url": "homepage-2.html",
+            "varname": "showcases"
+        },
+        {
+            "title": "Pages",
+            "url": "#",
+            "varname": "pages",
+            "isDropdown": true,
+            "hasSubmenus": true,
+            "icon": "ti-angle-down",
+            "submenus": [
+                {
+                    "title": "About Us",
+                    "url": "about.html",
+                    "varname": "about"
+                }
+            ]
+        }
+    ]
+}

@@ -7,79 +7,174 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
-        .wizard-container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
+        :root {
+            --primary-color: #4e73df;
+            --primary-dark: #2e59d9;
+            --secondary-color: #858796;
+            --success-color: #1cc88a;
+            --info-color: #36b9cc;
+            --warning-color: #f6c23e;
+            --danger-color: #e74a3b;
         }
+        
+        body {
+            background-color: #f8f9fc;
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            color: #5a5c69;
+        }
+        
+        .wizard-container {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 0;
+            box-shadow: 0 .15rem 1.75rem 0 rgba(58,59,69,.15);
+            border-radius: 0.5rem;
+            background-color: #fff;
+            overflow: hidden;
+        }
+        
+        .wizard-header {
+            background: linear-gradient(to right, var(--primary-color), var(--primary-dark));
+            color: white;
+            padding: 1.5rem;
+            border-bottom: 1px solid #e3e6f0;
+        }
+        
+        .wizard-header h1 {
+            margin: 0;
+            font-weight: 700;
+            font-size: 1.75rem;
+        }
+        
+        .wizard-body {
+            padding: 1.5rem;
+        }
+        
         .step {
             display: none;
         }
+        
         .step.active {
             display: block;
         }
+        
         .step-indicator {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 30px;
+            margin: 0 auto 2rem;
             position: relative;
+            max-width: 700px;
         }
+        
         .step-indicator::before {
             content: '';
             position: absolute;
             top: 18px;
             left: 0;
             right: 0;
-            height: 2px;
+            height: 4px;
             background: #e9ecef;
-            z-index: -1;
+            z-index: 1;
         }
+        
+        .step-indicator-progress {
+            position: absolute;
+            top: 18px;
+            left: 0;
+            height: 4px;
+            background: var(--primary-color);
+            z-index: 2;
+            transition: width 0.3s ease;
+        }
+        
         .step-indicator-item {
-            width: 38px;
-            height: 38px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             background-color: #e9ecef;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            z-index: 1;
+            z-index: 3;
+            position: relative;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+            color: var(--secondary-color);
         }
+        
         .step-indicator-item.active {
-            background-color: #007bff;
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
             color: white;
+            box-shadow: 0 0 0 5px rgba(78, 115, 223, 0.2);
         }
+        
         .step-indicator-item.completed {
-            background-color: #28a745;
+            background-color: var(--success-color);
+            border-color: var(--success-color);
             color: white;
         }
+        
+        .step-indicator-item::after {
+            content: attr(data-title);
+            position: absolute;
+            top: 45px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.75rem;
+            white-space: nowrap;
+            font-weight: 600;
+            color: var(--secondary-color);
+        }
+        
+        .step-indicator-item.active::after,
+        .step-indicator-item.completed::after {
+            color: #5a5c69;
+            font-weight: 700;
+        }
+        
+        .step-content {
+            background-color: white;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
         pre {
             background-color: #f8f9fa;
             padding: 15px;
             border-radius: 5px;
             max-height: 400px;
             overflow-y: auto;
+            border: 1px solid #e3e6f0;
         }
+        
         #entity-configs-editor, #requirements-text {
-            font-family: monospace;
+            font-family: 'Courier New', monospace;
             resize: vertical;
             min-height: 200px;
+            border-color: #d1d3e2;
+            color: #6e707e;
         }
+        
         .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
+            border: 4px solid rgba(78, 115, 223, 0.1);
+            border-top: 4px solid var(--primary-color);
             border-radius: 50%;
-            width: 30px;
-            height: 30px;
+            width: 24px;
+            height: 24px;
             animation: spin 2s linear infinite;
             display: inline-block;
             margin-right: 10px;
             vertical-align: middle;
         }
+        
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
         .notification {
             position: fixed;
             top: 20px;
@@ -91,145 +186,454 @@
             transition: all 0.3s ease;
             opacity: 0;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            max-width: 400px;
         }
+        
         .notification.success {
-            background-color: #28a745;
+            background-color: var(--success-color);
         }
+        
         .notification.error {
-            background-color: #dc3545;
+            background-color: var(--danger-color);
         }
+        
+        .notification.info {
+            background-color: var(--info-color);
+        }
+        
         .notification.show {
             opacity: 1;
+            transform: translateY(10px);
+        }
+        
+        .card {
+            border: none;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58,59,69,.1);
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-header {
+            background-color: #f8f9fc;
+            border-bottom: 1px solid #e3e6f0;
+            font-weight: 700;
+            color: #4e73df;
+            padding: 0.75rem 1.25rem;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+        }
+        
+        .form-control:focus {
+            border-color: #bac8f3;
+            box-shadow: 0 0 0 0.25rem rgba(78, 115, 223, 0.25);
+        }
+        
+        .step-title {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .step-title i {
+            font-size: 1.75rem;
+            margin-right: 0.75rem;
+            color: var(--primary-color);
+        }
+        
+        .step-title h3 {
+            margin: 0;
+            font-weight: 700;
+            color: #5a5c69;
+        }
+        
+        .step-subtitle {
+            color: #858796;
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+        }
+        
+        .code-badge {
+            background-color: #e0e7ff;
+            color: #4338ca;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            display: inline-block;
+            margin-right: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .entity-badge {
+            background-color: #f0f9ff;
+            color: #0369a1;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            display: inline-block;
+            margin-right: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .btn-floating {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        
+        .wizard-help {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background-color: var(--primary-color);
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            z-index: 999;
+        }
+        
+        .wizard-help:hover {
+            transform: scale(1.1);
+        }
+        
+        .progress-container {
+            margin: 1.5rem 0;
+        }
+        
+        .progress {
+            height: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .files-container {
+            max-height: 250px;
+            overflow-y: auto;
+            border: 1px solid #e3e6f0;
+            border-radius: 0.25rem;
+            margin: 1rem 0;
+        }
+        
+        .file-item {
+            padding: 0.5rem 1rem;
+            border-bottom: 1px solid #e3e6f0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .file-item:last-child {
+            border-bottom: none;
+        }
+        
+        .file-icon {
+            color: var(--secondary-color);
+            margin-right: 0.75rem;
+            font-size: 1rem;
+        }
+        
+        .file-name {
+            flex-grow: 1;
+            font-weight: 500;
+        }
+        
+        .file-type {
+            color: var(--secondary-color);
+            font-size: 0.75rem;
+            background-color: #f8f9fc;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+        }
+        
+        .tech-tag {
+            display: inline-block;
+            background-color: #f0f0f0;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+            color: #666;
         }
     </style>
 </head>
 <body>
     <div class="wizard-container">
-        <h2 class="text-center mb-4">Generate Prototype Project</h2>
-        
-        <div class="step-indicator">
-            <div class="step-indicator-item active" data-step="1">1</div>
-            <div class="step-indicator-item" data-step="2">2</div>
-            <div class="step-indicator-item" data-step="3">3</div>
-            <div class="step-indicator-item" data-step="4">4</div>
+        <div class="wizard-header">
+            <h1><i class="bi bi-tools me-2"></i>Project Generator Wizard</h1>
+            <p class="mb-0 mt-2 small">Build JSON-Server projects in seconds</p>
         </div>
         
-        <!-- Step 1: Requirements Input -->
-        <div class="step active" id="step1">
-            <h3>Step 1: Define Project Requirements</h3>
-            <p class="text-muted">Start by describing your project's entities and their fields.</p>
-            
-            <div class="mb-3">
-                <label for="project-name" class="form-label">Project Name:</label>
-                <input type="text" class="form-control" id="project-name" placeholder="e.g., e-commerce-api">
-                <div class="form-text">Use only letters, numbers, hyphens, and underscores.</div>
+        <div class="wizard-body">
+            <div class="step-indicator">
+                <div class="step-indicator-progress" id="progress-bar" style="width: 0%"></div>
+                <div class="step-indicator-item active" data-step="1" data-title="Define Requirements">1</div>
+                <div class="step-indicator-item" data-step="2" data-title="Entity Configs">2</div>
+                <div class="step-indicator-item" data-step="3" data-title="Generate Project">3</div>
+                <div class="step-indicator-item" data-step="4" data-title="Download">4</div>
             </div>
             
-            <div class="mb-3">
-                <label for="requirements-text" class="form-label">Project Requirements:</label>
-                <textarea class="form-control" id="requirements-text" rows="8" placeholder="Describe your project entities and their fields. Example: Create a project with User and Product entities. User has fields: name, email, password. Product has fields: title, price, description, category."></textarea>
-            </div>
-            
-            <div class="mb-3">
-                <label for="port-number" class="form-label">JSON-Server Port:</label>
-                <input type="number" class="form-control" id="port-number" value="3002" min="1024" max="65535">
-            </div>
-            
-            <div class="d-flex justify-content-between mt-4">
-                <button id="test-connection-btn" class="btn btn-outline-secondary">
-                    <i class="bi bi-check-circle"></i> Test Connection
-                </button>
-                <button id="next-step1" class="btn btn-primary">Next <i class="bi bi-arrow-right"></i></button>
-            </div>
-        </div>
-        
-        <!-- Step 2: Generate Entity Configurations -->
-        <div class="step" id="step2">
-            <h3>Step 2: Entity Configurations</h3>
-            <p class="text-muted">Review and edit the generated entity configurations.</p>
-            
-            <div class="mb-3">
-                <label for="entity-configs-editor" class="form-label">Entity Configurations:</label>
-                <textarea class="form-control" id="entity-configs-editor" rows="12"></textarea>
-            </div>
-            
-            <div class="d-flex justify-content-between mt-4">
-                <button id="prev-step2" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Previous</button>
-                <button id="generate-entity-configs" class="btn btn-primary">
-                    <span id="generate-entity-configs-spinner" class="d-none">
-                        <span class="loader"></span>
-                    </span>
-                    Generate Entity Configs
-                </button>
-                <button id="next-step2" class="btn btn-primary" disabled>Next <i class="bi bi-arrow-right"></i></button>
-            </div>
-        </div>
-        
-        <!-- Step 3: Generate Project Structure -->
-        <div class="step" id="step3">
-            <h3>Step 3: Generate Project Structure</h3>
-            <p class="text-muted">Generate the complete project structure based on your requirements.</p>
-            
-            <div class="mb-3">
-                <div class="card">
-                    <div class="card-header">Project Details</div>
-                    <div class="card-body">
-                        <p><strong>Project Name:</strong> <span id="project-name-display"></span></p>
-                        <p><strong>Port:</strong> <span id="port-display"></span></p>
-                        <p><strong>Entities:</strong> <span id="entities-display"></span></p>
+            <!-- Step 1: Requirements Input -->
+            <div class="step active" id="step1">
+                <div class="step-title pt-4 mb-0">
+                    <i class="bi bi-lightbulb"></i>
+                    <h3>Define Project Requirements</h3>
+                </div>
+                <p class="step-subtitle mt-0">Start by describing your project's entities and their fields.</p>
+                
+                <div class="step-content">
+                    <div class="mb-3">
+                        <label for="project-name" class="form-label"><i class="bi bi-folder me-2"></i>Project Name:</label>
+                        <input type="text" class="form-control" id="project-name" placeholder="e.g., e-commerce-api">
+                        <div class="form-text">Use only letters, numbers, hyphens, and underscores.</div>
                     </div>
+                    
+                    <div class="mb-3">
+                        <label for="requirements-text" class="form-label"><i class="bi bi-list-check me-2"></i>Project Requirements:</label>
+                        <textarea class="form-control" id="requirements-text" rows="8" placeholder="Example: Create a project with User and Product entities. User has fields: name, email, password. Product has fields: title, price, description, category."></textarea>
+                        <div class="form-text">Describe each entity and its fields clearly. Format: "Entity has fields: field1, field2, field3"</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="port-number" class="form-label"><i class="bi bi-hdd-network me-2"></i>JSON-Server Port:</label>
+                        <input type="number" class="form-control" id="port-number" value="3002" min="1024" max="65535">
+                        <div class="form-text">The port where your JSON-Server will run (1024-65535)</div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between mt-4">
+                    <button id="test-connection-btn" class="btn btn-outline-secondary">
+                        <i class="bi bi-check-circle me-1"></i> Test Connection
+                    </button>
+                    <button id="next-step1" class="btn btn-primary">
+                        Next <i class="bi bi-arrow-right ms-1"></i>
+                    </button>
                 </div>
             </div>
             
-            <div class="mb-3">
-                <label class="form-label">Project Generation Status:</label>
-                <pre id="project-gen-status">Ready to generate project...</pre>
-            </div>
-            
-            <div class="d-flex justify-content-between mt-4">
-                <button id="prev-step3" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Previous</button>
-                <button id="generate-project-btn" class="btn btn-primary">
-                    <span id="generate-project-spinner" class="d-none">
-                        <span class="loader"></span>
-                    </span>
-                    Generate Project
-                </button>
-                <button id="next-step3" class="btn btn-primary" disabled>Next <i class="bi bi-arrow-right"></i></button>
-            </div>
-        </div>
-        
-        <!-- Step 4: Download Project -->
-        <div class="step" id="step4">
-            <h3>Step 4: Download Project</h3>
-            <p class="text-muted">Your project has been generated. Download it as a ZIP file.</p>
-            
-            <div class="mb-3">
-                <div class="card">
-                    <div class="card-header">Generated Project Details</div>
-                    <div class="card-body">
-                        <p><strong>Project Path:</strong> <span id="project-path-display"></span></p>
-                        <p><strong>Generated Files:</strong></p>
-                        <ul id="generated-files-list">
-                            <li>db/db.json - Initial database</li>
-                            <li>static/entity-configs.js - Entity configurations</li>
-                            <li>static/crud.js - CRUD operations</li>
-                            <li>static/crud.html - UI for managing entities</li>
-                            <li>requirements/requirements.txt - Project requirements</li>
-                            <li>start.sh & start.bat - Scripts to start JSON Server</li>
-                            <li>mock/generate-mock-data.js - Script to generate mock data</li>
-                            <li>package.json - Project configuration</li>
-                            <li>README.md - Project documentation</li>
-                        </ul>
+            <!-- Step 2: Generate Entity Configurations -->
+            <div class="step" id="step2">
+                <div class="step-title">
+                    <i class="bi bi-gear"></i>
+                    <h3>Entity Configurations</h3>
+                </div>
+                <p class="step-subtitle">Review and edit the generated entity configurations.</p>
+                
+                <div class="step-content">
+                    <div class="alert alert-info d-flex align-items-center" role="alert">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <div>
+                            This code defines the entity configurations for your project. You can edit it if needed.
+                        </div>
                     </div>
+                    
+                    <div class="mb-3">
+                        <label for="entity-configs-editor" class="form-label"><i class="bi bi-code-slash me-2"></i>Entity Configurations:</label>
+                        <textarea class="form-control" id="entity-configs-editor" rows="12"></textarea>
+                        <div class="form-text">JavaScript code that defines your entities and their fields.</div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between mt-4">
+                    <button id="prev-step2" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i> Previous
+                    </button>
+                    <button id="generate-entity-configs" class="btn btn-primary">
+                        <span id="generate-entity-configs-spinner" class="d-none">
+                            <span class="loader"></span>
+                        </span>
+                        <i class="bi bi-lightning-charge me-1"></i> Generate Entity Configs
+                    </button>
+                    <button id="next-step2" class="btn btn-primary" disabled>
+                        Next <i class="bi bi-arrow-right ms-1"></i>
+                    </button>
                 </div>
             </div>
             
-            <div class="d-flex justify-content-between mt-4">
-                <button id="prev-step4" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Previous</button>
-                <button id="download-zip-btn" class="btn btn-success">
-                    <i class="bi bi-download"></i> Download Project ZIP
-                </button>
-                <button id="start-over-btn" class="btn btn-outline-primary">Start Over</button>
+            <!-- Step 3: Generate Project Structure -->
+            <div class="step" id="step3">
+                <div class="step-title">
+                    <i class="bi bi-diagram-3"></i>
+                    <h3>Generate Project Structure</h3>
+                </div>
+                <p class="step-subtitle">Generate the complete project structure based on your requirements.</p>
+                
+                <div class="step-content">
+                    <div class="card mb-3">
+                        <div class="card-header d-flex align-items-center">
+                            <i class="bi bi-info-circle me-2"></i> Project Details
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong><i class="bi bi-folder me-2"></i>Project Name:</strong> <span id="project-name-display"></span></p>
+                                    <p><strong><i class="bi bi-hdd-network me-2"></i>Port:</strong> <span id="port-display"></span></p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong><i class="bi bi-database me-2"></i>Entities:</strong> </p>
+                                    <div id="entities-display-container"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="tech-tags mt-3">
+                                <div class="tech-tag"><i class="bi bi-filetype-json me-1"></i>JSON-Server</div>
+                                <div class="tech-tag"><i class="bi bi-filetype-js me-1"></i>JavaScript</div>
+                                <div class="tech-tag"><i class="bi bi-filetype-html me-1"></i>HTML/CSS</div>
+                                <div class="tech-tag"><i class="bi bi-bootstrap me-1"></i>Bootstrap</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label"><i class="bi bi-terminal me-2"></i>Project Generation Status:</label>
+                        <pre id="project-gen-status" class="mb-0">Ready to generate project...</pre>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between mt-4">
+                    <button id="prev-step3" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i> Previous
+                    </button>
+                    <button id="generate-project-btn" class="btn btn-primary">
+                        <span id="generate-project-spinner" class="d-none">
+                            <span class="loader"></span>
+                        </span>
+                        <i class="bi bi-layers me-1"></i> Generate Project
+                    </button>
+                    <button id="next-step3" class="btn btn-primary" disabled>
+                        Next <i class="bi bi-arrow-right ms-1"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Step 4: Download Project -->
+            <div class="step" id="step4">
+                <div class="step-title">
+                    <i class="bi bi-download"></i>
+                    <h3>Download Project</h3>
+                </div>
+                <p class="step-subtitle">Your project has been generated. Download it as a ZIP file.</p>
+                
+                <div class="step-content">
+                    <div class="alert alert-success d-flex align-items-center" role="alert">
+                        <i class="bi bi-check-circle-fill me-2"></i>
+                        <div>
+                            Project generated successfully! You can now download it as a ZIP file.
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-3">
+                        <div class="card-header d-flex align-items-center">
+                            <i class="bi bi-file-earmark-zip me-2"></i> Generated Project Details
+                        </div>
+                        <div class="card-body">
+                            <p><strong><i class="bi bi-folder2-open me-2"></i>Project Path:</strong> <span id="project-path-display" class="text-monospace"></span></p>
+                            
+                            <p class="mb-2"><strong><i class="bi bi-file-earmark-text me-2"></i>Generated Files:</strong></p>
+                            <div class="files-container">
+                                <div class="file-item">
+                                    <i class="bi bi-filetype-json file-icon"></i>
+                                    <span class="file-name">db/db.json</span>
+                                    <span class="file-type">JSON</span>
+                                </div>
+                                <div class="file-item">
+                                    <i class="bi bi-filetype-js file-icon"></i>
+                                    <span class="file-name">static/entity-configs.js</span>
+                                    <span class="file-type">JavaScript</span>
+                                </div>
+                                <div class="file-item">
+                                    <i class="bi bi-filetype-js file-icon"></i>
+                                    <span class="file-name">static/crud.js</span>
+                                    <span class="file-type">JavaScript</span>
+                                </div>
+                                <div class="file-item">
+                                    <i class="bi bi-filetype-html file-icon"></i>
+                                    <span class="file-name">static/crud.html</span>
+                                    <span class="file-type">HTML</span>
+                                </div>
+                                <div class="file-item">
+                                    <i class="bi bi-filetype-txt file-icon"></i>
+                                    <span class="file-name">requirements/requirements.txt</span>
+                                    <span class="file-type">TXT</span>
+                                </div>
+                                <div class="file-item">
+                                    <i class="bi bi-filetype-sh file-icon"></i>
+                                    <span class="file-name">start.sh</span>
+                                    <span class="file-type">Shell Script</span>
+                                </div>
+                                <div class="file-item">
+                                    <i class="bi bi-filetype-bat file-icon"></i>
+                                    <span class="file-name">start.bat</span>
+                                    <span class="file-type">Batch File</span>
+                                </div>
+                                <div class="file-item">
+                                    <i class="bi bi-filetype-js file-icon"></i>
+                                    <span class="file-name">mock/generate-mock-data.js</span>
+                                    <span class="file-type">JavaScript</span>
+                                </div>
+                                <div class="file-item">
+                                    <i class="bi bi-filetype-json file-icon"></i>
+                                    <span class="file-name">package.json</span>
+                                    <span class="file-type">JSON</span>
+                                </div>
+                                <div class="file-item">
+                                    <i class="bi bi-filetype-md file-icon"></i>
+                                    <span class="file-name">README.md</span>
+                                    <span class="file-type">Markdown</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info" role="alert">
+                        <h5 class="alert-heading"><i class="bi bi-lightbulb-fill me-2"></i>Next Steps</h5>
+                        <ol class="mb-0">
+                            <li>Download and extract the ZIP file</li>
+                            <li>Run <code>npm install</code> in the project directory</li>
+                            <li>Start the JSON Server with <code>npm start</code></li>
+                            <li>Open the CRUD UI in your browser at <code>http://localhost:<span id="final-port-display">3002</span>/static/crud.html</code></li>
+                        </ol>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between mt-4">
+                    <button id="prev-step4" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i> Previous
+                    </button>
+                    <button id="download-zip-btn" class="btn btn-success">
+                        <i class="bi bi-download me-1"></i> Download Project ZIP
+                    </button>
+                    <button id="start-over-btn" class="btn btn-outline-primary">
+                        <i class="bi bi-arrow-repeat me-1"></i> Start Over
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -237,6 +641,11 @@
     <!-- Notification div -->
     <div id="notification" class="notification">
         <span id="notification-message"></span>
+    </div>
+    
+    <!-- Help button -->
+    <div class="wizard-help" data-bs-toggle="tooltip" data-bs-placement="left" title="Need help?">
+        <i class="bi bi-question-lg"></i>
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>

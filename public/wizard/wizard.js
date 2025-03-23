@@ -10,10 +10,12 @@ document.addEventListener('DOMContentLoaded', function() {
     let generatedProjectPath = '';
     let generatedProjectName = '';
     let entityConfigs = '';
+    let detectedEntities = [];
     
     // DOM Elements
     const steps = document.querySelectorAll('.step');
     const stepIndicators = document.querySelectorAll('.step-indicator-item');
+    const progressBar = document.getElementById('progress-bar');
     
     // Step 1 Elements
     const projectNameInput = document.getElementById('project-name');
@@ -32,7 +34,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Step 3 Elements
     const projectNameDisplay = document.getElementById('project-name-display');
     const portDisplay = document.getElementById('port-display');
-    const entitiesDisplay = document.getElementById('entities-display');
+    const entitiesDisplayContainer = document.getElementById('entities-display-container');
     const projectGenStatus = document.getElementById('project-gen-status');
     const prevStep3Btn = document.getElementById('prev-step3');
     const generateProjectBtn = document.getElementById('generate-project-btn');
@@ -41,10 +43,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Step 4 Elements
     const projectPathDisplay = document.getElementById('project-path-display');
-    const generatedFilesList = document.getElementById('generated-files-list');
+    const finalPortDisplay = document.getElementById('final-port-display');
     const prevStep4Btn = document.getElementById('prev-step4');
     const downloadZipBtn = document.getElementById('download-zip-btn');
     const startOverBtn = document.getElementById('start-over-btn');
+    
+    // Help button
+    const wizardHelp = document.querySelector('.wizard-help');
     
     // Notification
     const notification = document.getElementById('notification');
@@ -68,6 +73,16 @@ document.addEventListener('DOMContentLoaded', function() {
     downloadZipBtn.addEventListener('click', downloadProjectZip);
     startOverBtn.addEventListener('click', startOver);
     
+    // Add help tooltip
+    if (typeof bootstrap !== 'undefined') {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    }
+    
+    wizardHelp.addEventListener('click', showHelp);
+    
     // Functions
     
     function goToStep(step) {
@@ -90,6 +105,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
+        // Update progress bar
+        const progressPercentage = ((step - 1) / (stepIndicators.length - 1)) * 100;
+        progressBar.style.width = `${progressPercentage}%`;
+        
         currentStep = step;
         
         // Prepare step data
@@ -97,18 +116,19 @@ document.addEventListener('DOMContentLoaded', function() {
             // Update project info display
             projectNameDisplay.textContent = projectNameInput.value;
             portDisplay.textContent = portNumberInput.value;
+            finalPortDisplay.textContent = portNumberInput.value;
             
-            // Try to extract entities from requirements
-            const requirements = requirementsTextarea.value;
-            const entityMatches = requirements.match(/([A-Z][a-zA-Z]*) has fields/g) || [];
-            const entities = entityMatches.map(match => match.replace(' has fields', ''));
-            entitiesDisplay.textContent = entities.join(', ') || 'None detected';
+            // Display entities
+            updateEntitiesDisplay();
         }
         
         if (step === 4) {
             // Update project path display
             projectPathDisplay.textContent = generatedProjectPath;
         }
+        
+        // Scroll to top when changing steps
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     
     function validateStep1() {
@@ -118,26 +138,31 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (!projectName) {
             showNotification('Project name is required', 'error');
+            projectNameInput.focus();
             return false;
         }
         
         if (!/^[a-zA-Z0-9-_]+$/.test(projectName)) {
             showNotification('Project name can only contain letters, numbers, hyphens, and underscores', 'error');
+            projectNameInput.focus();
             return false;
         }
         
         if (!requirements) {
             showNotification('Requirements text is required', 'error');
+            requirementsTextarea.focus();
             return false;
         }
         
         if (requirements.length < 10) {
             showNotification('Requirements text must be at least 10 characters', 'error');
+            requirementsTextarea.focus();
             return false;
         }
         
         if (port < 1024 || port > 65535) {
             showNotification('Port must be between 1024 and 65535', 'error');
+            portNumberInput.focus();
             return false;
         }
         
@@ -162,6 +187,24 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    function updateEntitiesDisplay() {
+        // Clear previous content
+        entitiesDisplayContainer.innerHTML = '';
+        
+        if (detectedEntities.length === 0) {
+            entitiesDisplayContainer.innerHTML = '<span class="text-muted">None detected</span>';
+            return;
+        }
+        
+        // Create entity badges
+        detectedEntities.forEach(entity => {
+            const badge = document.createElement('span');
+            badge.className = 'entity-badge';
+            badge.innerHTML = `<i class="bi bi-table me-1"></i>${entity}`;
+            entitiesDisplayContainer.appendChild(badge);
+        });
+    }
+    
     async function generateEntityConfigs() {
         if (!validateStep1()) return;
         
@@ -184,6 +227,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             let generatedCode = '// Generated entity configurations\n\n';
             let configuredEntitiesArray = [];
+            detectedEntities = [];
             
             for (const match of entityMatches) {
                 const entityNameMatch = match.match(/([A-Z][a-zA-Z]*) has fields/);
@@ -193,6 +237,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     const entityName = entityNameMatch[1];
                     const fieldsStr = fieldsMatch[1];
                     const fields = fieldsStr.split(',').map(f => f.trim());
+                    
+                    detectedEntities.push(entityName);
                     
                     const entityVarName = `${entityName.toLowerCase()}Config`;
                     const entityPluralName = `${entityName.toLowerCase()}s`;
@@ -236,6 +282,7 @@ ${configuredEntitiesArray.join(',\n')}
             entityConfigsGenerated = true;
             nextStep2Btn.disabled = false;
             
+            updateEntitiesDisplay();
             showNotification('Entity configurations generated successfully!', 'success');
         } catch (error) {
             console.error('Error generating entity configs:', error);
@@ -296,8 +343,8 @@ ${configuredEntitiesArray.join(',\n')}
                 generatedProjectName = data.data.projectName;
                 projectGenerated = true;
                 
-                // Update status
-                projectGenStatus.textContent = `Project generated successfully at: ${generatedProjectPath}`;
+                // Update status with success styling
+                projectGenStatus.innerHTML = `<span class="text-success"><i class="bi bi-check-circle me-2"></i>Project generated successfully at: ${generatedProjectPath}</span>`;
                 
                 // Enable next button
                 nextStep3Btn.disabled = false;
@@ -308,7 +355,7 @@ ${configuredEntitiesArray.join(',\n')}
             }
         } catch (error) {
             console.error('Error generating project:', error);
-            projectGenStatus.textContent = `Error: ${error.message}`;
+            projectGenStatus.innerHTML = `<span class="text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Error: ${error.message}</span>`;
             showNotification('Error generating project: ' + error.message, 'error');
         } finally {
             // Hide spinner and enable button
@@ -338,13 +385,13 @@ ${configuredEntitiesArray.join(',\n')}
             setTimeout(() => {
                 showNotification('Project ZIP download started!', 'success');
                 downloadZipBtn.disabled = false;
-                downloadZipBtn.innerHTML = '<i class="bi bi-download"></i> Download Project ZIP';
+                downloadZipBtn.innerHTML = '<i class="bi bi-download me-1"></i> Download Project ZIP';
             }, 2000);
         } catch (error) {
             console.error('Error downloading project ZIP:', error);
             showNotification('Error downloading project ZIP: ' + error.message, 'error');
             downloadZipBtn.disabled = false;
-            downloadZipBtn.innerHTML = '<i class="bi bi-download"></i> Download Project ZIP';
+            downloadZipBtn.innerHTML = '<i class="bi bi-download me-1"></i> Download Project ZIP';
         }
     }
     
@@ -356,6 +403,7 @@ ${configuredEntitiesArray.join(',\n')}
         generatedProjectPath = '';
         generatedProjectName = '';
         entityConfigs = '';
+        detectedEntities = [];
         
         // Reset form fields
         projectNameInput.value = '';
@@ -370,6 +418,61 @@ ${configuredEntitiesArray.join(',\n')}
         
         // Go to first step
         goToStep(1);
+        
+        showNotification('Wizard has been reset. Start a new project.', 'info');
+    }
+    
+    function showHelp() {
+        // Create a Bootstrap modal with help information
+        const modalHtml = `
+        <div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="helpModalLabel"><i class="bi bi-question-circle me-2"></i>Project Generator Wizard Help</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <h5><i class="bi bi-1-circle me-2"></i>Step 1: Define Project Requirements</h5>
+                        <p>Enter your project details and requirements for the entities you want to create. Format your requirements as follows:</p>
+                        <pre class="bg-light p-3">Create a project with User and Product entities.
+User has fields: name, email, password.
+Product has fields: title, price, description, category.</pre>
+                        <hr>
+                        
+                        <h5><i class="bi bi-2-circle me-2"></i>Step 2: Entity Configurations</h5>
+                        <p>Generate and review the entity configurations based on your requirements. You can edit these if needed.</p>
+                        <hr>
+                        
+                        <h5><i class="bi bi-3-circle me-2"></i>Step 3: Generate Project</h5>
+                        <p>Review your project details and generate the project structure. This will create all necessary files for your JSON-Server project.</p>
+                        <hr>
+                        
+                        <h5><i class="bi bi-4-circle me-2"></i>Step 4: Download Project</h5>
+                        <p>Download your generated project as a ZIP file. The project includes everything needed to run a JSON-Server based API with a CRUD UI.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Got it!</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        `;
+        
+        // Append modal to body if it doesn't exist
+        if (!document.getElementById('helpModal')) {
+            const modalContainer = document.createElement('div');
+            modalContainer.innerHTML = modalHtml;
+            document.body.appendChild(modalContainer);
+        }
+        
+        // Show the modal using Bootstrap
+        if (typeof bootstrap !== 'undefined') {
+            const helpModal = new bootstrap.Modal(document.getElementById('helpModal'));
+            helpModal.show();
+        } else {
+            showNotification('Bootstrap library not loaded properly', 'error');
+        }
     }
     
     function showNotification(message, type) {

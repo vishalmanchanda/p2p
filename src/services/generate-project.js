@@ -27,6 +27,7 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
+const entityConfigGenerator = require('../utils/entity-config-generator');
 
 /**
  * Generates a project structure based on the specified template
@@ -175,13 +176,72 @@ function copyDirectory(source, destination) {
   }
 }
 
-async function generateEntityConfigs(projectPath, requirementsText, port = 3002, host = 'localhost') {
+async function generateEntityConfigs(projectPath, requirementsText, port = 3002, host = 'localhost', useLLM = false) {
   const entityConfigsPath = path.join(projectPath, 'static', 'entity-configs.js');
 
-  // call the generateCode function from gen-ai.service.js
-  const genAIService = require('./gen-ai.service');
+  // By default, use the rule-based generator from entityConfigGenerator utility
+  console.log('Using rule-based generator to create entity configurations...');
   try {
-    console.log('Calling AI service to generate entity configurations...');
+    // Extract entities from requirements to check if we have valid entities
+    const entities = entityConfigGenerator.extractEntitiesFromRequirements(requirementsText);
+    
+    // If no entities are found or if useLLM is explicitly set to true, try using LLM
+    if (entities.length === 0 || useLLM) {
+      console.log(`${entities.length === 0 ? 'No entities found in requirements.' : 'useLLM flag is set to true.'} Attempting to use LLM...`);
+      try {
+        const llmConfigPath = await generateEntityConfigsWithLLM(projectPath, requirementsText, port, host);
+        return llmConfigPath;
+      } catch (llmError) {
+        console.error('Error generating entity configs with LLM:', llmError);
+        console.log('Falling back to rule-based generator...');
+      }
+    }
+    
+    // Generate configs using the rule-based approach
+    const defaultConfig = entityConfigGenerator.generateEntityConfigsCode(requirementsText, port, host);
+    fs.writeFileSync(entityConfigsPath, defaultConfig);
+    console.log(`Entity configs generated at: ${entityConfigsPath} using rule-based generator`);
+    return entityConfigsPath;
+  } catch (error) {
+    console.error('Error generating entity configs:', error);
+    
+    // Last resort: use a minimal default configuration if everything else fails
+    console.log('Creating minimal default entity configs');
+    const minimalConfig = `// Default entity configuration
+const defaultConfig = {
+  entityName: 'items',
+  title: 'Items',
+  apiBaseUrl: 'http://${host}:${port}',
+  itemsPerPage: 10,
+  attributes: [
+    { name: 'id', label: 'ID', type: 'number', required: true },
+    { name: 'name', label: 'Name', type: 'text', required: true }
+  ]
+};
+
+const configuredEntities = [
+  { name: 'items', config: defaultConfig }
+];`;
+    
+    fs.writeFileSync(entityConfigsPath, minimalConfig);
+    return entityConfigsPath;
+  }
+}
+
+/**
+ * Generates entity configurations using AI/LLM
+ * @param {string} projectPath - Path to the project directory
+ * @param {string} requirementsText - Content for requirements.txt file
+ * @param {number} port - Port number for API base URL
+ * @param {string} host - Host for API base URL
+ * @returns {Promise<string>} - Path to the generated entity configs file
+ */
+async function generateEntityConfigsWithLLM(projectPath, requirementsText, port = 3002, host = 'localhost') {
+  const entityConfigsPath = path.join(projectPath, 'static', 'entity-configs.js');
+  const genAIService = require('./gen-ai.service');
+  
+  console.log('Calling AI service to generate entity configurations...');
+  try {
     const response = await Promise.race([
       genAIService.generateCode({
         prompt: `Generate JavaScript code for entity configurations based on these requirements: ${requirementsText}
@@ -233,9 +293,8 @@ const configuredEntities = [{name: 'entityName', config: entityConfig}, ...];
       entityConfigs = response;
       console.log('Received string response from AI service');
     } else {
-      // Create a default implementation based on the requirements
-      console.log('Creating default entity configs from requirements');
-      entityConfigs = generateDefaultEntityConfigs(requirementsText, host, port);
+      // Fall back to rule-based generator if we can't extract code from the response
+      throw new Error('Unable to extract valid code from AI response');
     }
     
     // Make sure we have a string before writing to file
@@ -245,98 +304,12 @@ const configuredEntities = [{name: 'entityName', config: entityConfig}, ...];
     }
     
     fs.writeFileSync(entityConfigsPath, entityConfigs);
-    console.log(`Entity configs generated at: ${entityConfigsPath}`);
+    console.log(`Entity configs generated at: ${entityConfigsPath} using LLM`);
     return entityConfigsPath;
   } catch (error) {
-    console.error('Error generating entity configs:', error);
-    
-    // Create a default implementation as fallback
-    console.log('Creating default entity configs as fallback');
-    const defaultConfig = generateDefaultEntityConfigs(requirementsText, host, port);
-    fs.writeFileSync(entityConfigsPath, defaultConfig);
-    
-    return entityConfigsPath;
+    console.error('Error generating entity configs with LLM:', error);
+    throw error; // Re-throw to be caught by the calling function
   }
-}
-
-/**
- * Generates default entity configurations based on requirements text
- * Used as a fallback when AI generation fails
- */
-function generateDefaultEntityConfigs(requirementsText, host = 'localhost', port = 3002) {
-  // Parse the requirements to extract entity names and fields
-  // This is a simple implementation and may not handle all cases
-  const entityMatches = requirementsText.match(/([A-Z][a-zA-Z]*) has fields: ([^.]+)/g) || [];
-  
-  if (entityMatches.length === 0) {
-    // No entities found, return a minimal default config
-    return `// Default entity configuration
-const defaultConfig = {
-  entityName: 'items',
-  title: 'Items',
-  apiBaseUrl: 'http://${host}:${port}',
-  itemsPerPage: 10,
-  attributes: [
-    { name: 'id', label: 'ID', type: 'number', required: true, hideInTable: false },
-    { name: 'name', label: 'Name', type: 'text', required: true, hideInTable: false }
-  ]
-};
-
-const configuredEntities = [
-  { name: 'items', config: defaultConfig }
-];
-`;
-  }
-  
-  let entityConfigs = '// Generated entity configurations\n\n';
-  let configuredEntitiesArray = [];
-  
-  entityMatches.forEach(match => {
-    const entityNameMatch = match.match(/([A-Z][a-zA-Z]*) has fields/);
-    const fieldsMatch = match.match(/has fields: ([^.]+)/);
-    
-    if (entityNameMatch && fieldsMatch) {
-      const entityName = entityNameMatch[1];
-      const fieldsStr = fieldsMatch[1];
-      const fields = fieldsStr.split(',').map(f => f.trim());
-      
-      const entityVarName = `${entityName.toLowerCase()}Config`;
-      const entityPluralName = `${entityName.toLowerCase()}s`;
-      
-      // Generate attributes array
-      const attributes = fields.map(field => {
-        let type = 'text';
-        if (field.includes('email')) type = 'email';
-        if (field.includes('password')) type = 'password';
-        if (field.includes('price') || field.includes('amount') || field.includes('id')) type = 'number';
-        if (field.includes('date')) type = 'date';
-        if (field.includes('description')) type = 'textarea';
-        
-        return `    { name: '${field}', label: '${field.charAt(0).toUpperCase() + field.slice(1)}', type: '${type}', required: true, hideInTable: ${type === 'password'} }`;
-      }).join(',\n');
-      
-      // Generate config for this entity
-      entityConfigs += `const ${entityVarName} = {
-  entityName: '${entityPluralName}',
-  title: '${entityName}',
-  apiBaseUrl: 'http://${host}:${port}',
-  itemsPerPage: 10,
-  attributes: [
-${attributes}
-  ]
-};\n\n`;
-      
-      configuredEntitiesArray.push(`  { name: '${entityName.toLowerCase()}', config: ${entityVarName} }`);
-    }
-  });
-  
-  // Add the configuredEntities array
-  entityConfigs += `const configuredEntities = [
-${configuredEntitiesArray.join(',\n')}
-];
-`;
-  
-  return entityConfigs;
 }
 
 // run this file using node src/services/generate-project.js

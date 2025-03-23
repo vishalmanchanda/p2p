@@ -40,6 +40,10 @@ if (!schemas.projectGeneration) {
     staticFolder: require('joi').string().default('static')
       .messages({
         'string.base': 'Static folder must be a string'
+      }),
+    useLLM: require('joi').boolean().default(false)
+      .messages({
+        'boolean.base': 'useLLM must be a boolean'
       })
   });
 }
@@ -84,6 +88,11 @@ if (!schemas.projectGeneration) {
  *                 description: Name of the static folder
  *                 default: static
  *                 example: static
+ *               useLLM:
+ *                 type: boolean
+ *                 description: Whether to use AI/LLM for entity config generation (false uses rule-based generator)
+ *                 default: false
+ *                 example: false
  *     responses:
  *       200:
  *         description: Successfully generated project
@@ -116,7 +125,7 @@ if (!schemas.projectGeneration) {
  */
 router.post('/', validate(schemas.projectGeneration), async (req, res, next) => {
   try {
-    const { projectName, requirementsText, port, host, staticFolder } = req.body;
+    const { projectName, requirementsText, port, host, staticFolder, useLLM } = req.body;
     
     console.log(`Starting project generation for "${projectName}"`);
     
@@ -144,7 +153,8 @@ router.post('/', validate(schemas.projectGeneration), async (req, res, next) => 
           projectPath, 
           requirementsText, 
           port, 
-          host
+          host,
+          useLLM
         );
         console.log('Entity configurations generated successfully');
       } catch (entityConfigError) {

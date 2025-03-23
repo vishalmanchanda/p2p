@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const projectNameInput = document.getElementById('project-name');
     const requirementsTextarea = document.getElementById('requirements-text');
     const portNumberInput = document.getElementById('port-number');
+    const useLLMCheckbox = document.getElementById('use-llm');
     const testConnectionBtn = document.getElementById('test-connection-btn');
     const nextStep1Btn = document.getElementById('next-step1');
     
@@ -210,81 +211,30 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const requirements = requirementsTextarea.value.trim();
         const port = portNumberInput.value;
+        const useLLM = useLLMCheckbox && useLLMCheckbox.checked;
         
         // Show spinner
         generateEntityConfigsBtn.disabled = true;
         generateEntityConfigsSpinner.classList.remove('d-none');
         
         try {
-            // This is a mock function for the demo - in a real implementation, we would
-            // call the backend API to generate the entity configs. For now, we'll parse 
-            // the requirements manually as a demonstration.
-            const entityMatches = requirements.match(/([A-Z][a-zA-Z]*) has fields: ([^.]+)/g) || [];
+            // Use the shared EntityConfigGenerator utility
+            if (!window.EntityConfigGenerator) {
+                throw new Error('Entity configuration generator utility not loaded.');
+            }
             
-            if (entityMatches.length === 0) {
+            // Extract entities from requirements
+            const entities = EntityConfigGenerator.extractEntitiesFromRequirements(requirements);
+            
+            if (entities.length === 0) {
                 throw new Error('No entities found in requirements. Please format your requirements as: "Entity has fields: field1, field2, etc."');
             }
             
-            let generatedCode = '// Generated entity configurations\n\n';
-            let configuredEntitiesArray = [];
-            detectedEntities = [];
+            // Get entity names for display
+            detectedEntities = entities.map(entity => entity.name);
             
-            for (const match of entityMatches) {
-                const entityNameMatch = match.match(/([A-Z][a-zA-Z]*) has fields/);
-                const fieldsMatch = match.match(/has fields: ([^.]+)/);
-                
-                if (entityNameMatch && fieldsMatch) {
-                    const entityName = entityNameMatch[1];
-                    const fieldsStr = fieldsMatch[1];
-                    const fields = fieldsStr.split(',').map(f => f.trim());
-                    
-                    detectedEntities.push(entityName);
-                    
-                    const entityVarName = `${entityName.toLowerCase()}Config`;
-                    const entityPluralName = `${entityName.toLowerCase()}s`;
-                    
-                    // Generate attributes array
-                    const attributes = fields.map(field => {
-                        let type = 'text';
-                        if (field.includes('email')) type = 'email';
-                        if (field.includes('password')) type = 'password';
-                        if (field.includes('price') || field.includes('amount') || field.includes('id')) type = 'number';
-                        if (field.includes('date')) type = 'date';
-                        if (field.includes('description')) type = 'textarea';
-                        if (field.includes('image')) type = 'image';
-                        if (field.includes('url')) type = 'url';
-                        if (field.includes('phone')) type = 'tel';
-                        if (field.includes('address')) type = 'textarea';
-                        if (field.includes('city')) type = 'text';
-                        if (field.includes('state')) type = 'text';
-                        if (field.includes('zip')) type = 'text';
-                        if (field.includes('country')) type = 'text';
-                        if (field.includes('latitude')) type = 'number';
-                        if (field.includes('longitude')) type = 'number';
-                        
-                        return `    { name: '${field}', label: '${field.charAt(0).toUpperCase() + field.slice(1)}', type: '${type}', required: true, hideInTable: ${type === 'password'} }`;
-                    }).join(',\n');
-                    
-                    // Generate config for this entity
-                    generatedCode += `const ${entityVarName} = {
-  entityName: '${entityPluralName}',
-  title: '${entityName}',
-  apiBaseUrl: 'http://localhost:${port}',
-  itemsPerPage: 10,
-  attributes: [
-${attributes}
-  ]
-};\n\n`;
-                    
-                    configuredEntitiesArray.push(`  { name: '${entityName.toLowerCase()}', config: ${entityVarName} }`);
-                }
-            }
-            
-            // Add the configuredEntities array
-            generatedCode += `const configuredEntities = [
-${configuredEntitiesArray.join(',\n')}
-];
-`;
+            // Generate the entity configurations code
+            const generatedCode = EntityConfigGenerator.generateEntityConfigsCode(requirements, port, 'localhost');
             
             // Display the generated code
             entityConfigsEditor.value = generatedCode;
@@ -293,7 +243,7 @@ ${configuredEntitiesArray.join(',\n')}
             nextStep2Btn.disabled = false;
             
             updateEntitiesDisplay();
-            showNotification('Entity configurations generated successfully!', 'success');
+            showNotification(`Entity configurations generated successfully${useLLM ? ' (LLM will be used during project generation)' : ' (rule-based generator will be used)'}!`, 'success');
         } catch (error) {
             console.error('Error generating entity configs:', error);
             showNotification('Error generating entity configs: ' + error.message, 'error');
@@ -314,6 +264,14 @@ ${configuredEntitiesArray.join(',\n')}
         const requirements = requirementsTextarea.value.trim();
         const port = portNumberInput.value;
         
+        // Debug the useLLM value
+        console.log('useLLMCheckbox:', useLLMCheckbox);
+        console.log('useLLMCheckbox checked:', useLLMCheckbox ? useLLMCheckbox.checked : 'checkbox not found');
+        
+        // Ensure it's properly cast as a boolean
+        const useLLM = Boolean(useLLMCheckbox && useLLMCheckbox.checked);
+        console.log('Final useLLM value:', useLLM, typeof useLLM);
+        
         // Show spinner and disable button
         generateProjectBtn.disabled = true;
         generateProjectSpinner.classList.remove('d-none');
@@ -328,8 +286,11 @@ ${configuredEntitiesArray.join(',\n')}
                 requirementsText: requirements,
                 port: parseInt(port),
                 host: 'localhost',
-                staticFolder: 'static'
+                staticFolder: 'static',
+                useLLM: Boolean(useLLM)
             };
+            
+            console.log('Sending payload:', payload);
             
             // Call the API to generate the project
             const response = await fetch(PROJECT_GEN_API, {

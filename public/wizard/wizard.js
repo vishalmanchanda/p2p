@@ -251,6 +251,16 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (field.includes('price') || field.includes('amount') || field.includes('id')) type = 'number';
                         if (field.includes('date')) type = 'date';
                         if (field.includes('description')) type = 'textarea';
+                        if (field.includes('image')) type = 'image';
+                        if (field.includes('url')) type = 'url';
+                        if (field.includes('phone')) type = 'tel';
+                        if (field.includes('address')) type = 'textarea';
+                        if (field.includes('city')) type = 'text';
+                        if (field.includes('state')) type = 'text';
+                        if (field.includes('zip')) type = 'text';
+                        if (field.includes('country')) type = 'text';
+                        if (field.includes('latitude')) type = 'number';
+                        if (field.includes('longitude')) type = 'number';
                         
                         return `    { name: '${field}', label: '${field.charAt(0).toUpperCase() + field.slice(1)}', type: '${type}', required: true, hideInTable: ${type === 'password'} }`;
                     }).join(',\n');

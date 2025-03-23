@@ -68,6 +68,61 @@ async function generateProject(projectName, requirementsText, port = 3002, stati
   const templateStaticPath = path.resolve(__dirname, '..', 'templates', 'static');
   if (fs.existsSync(templateStaticPath)) {
     copyDirectory(templateStaticPath, path.join(projectPath, 'static'));
+    
+    // Ensure the js and includes folders exist
+    const jsDir = path.join(projectPath, 'static', 'js');
+    const includesDir = path.join(projectPath, 'static', 'includes');
+    const configDir = path.join(projectPath, 'static', 'config');
+    
+    fs.mkdirSync(jsDir, { recursive: true });
+    fs.mkdirSync(includesDir, { recursive: true });
+    fs.mkdirSync(configDir, { recursive: true });
+    
+    // Copy navbar-related files if they exist in the template
+    const templateThemePath = path.resolve(__dirname, '..', 'templates', 'static', 'theme1');
+    
+    // Copy include-navbar.js
+    const templateNavbarJsPath = path.join(templateThemePath, 'js', 'include-navbar.js');
+    const targetNavbarJsPath = path.join(jsDir, 'include-navbar.js');
+    if (fs.existsSync(templateNavbarJsPath)) {
+      fs.copyFileSync(templateNavbarJsPath, targetNavbarJsPath);
+      console.log(`Copied include-navbar.js to ${targetNavbarJsPath}`);
+    }
+    
+    // Copy navbar.html
+    const templateNavbarHtmlPath = path.join(templateThemePath, 'includes', 'navbar.html');
+    const targetNavbarHtmlPath = path.join(includesDir, 'navbar.html');
+    if (fs.existsSync(templateNavbarHtmlPath)) {
+      fs.copyFileSync(templateNavbarHtmlPath, targetNavbarHtmlPath);
+      console.log(`Copied navbar.html to ${targetNavbarHtmlPath}`);
+    }
+    
+    // Create basic navbar-config.json if it doesn't exist
+    const navbarConfigPath = path.join(configDir, 'navbar-config.json');
+    if (!fs.existsSync(navbarConfigPath)) {
+      const navbarConfig = {
+        brand: {
+          url: "index.html",
+          logo: "images/logo.png",
+          alt: "logo"
+        },
+        menus: [
+          {
+            title: "Home",
+            url: "index.html",
+            varname: "home",
+            active: true
+          },
+          {
+            title: "Entities",
+            url: "crud.html",
+            varname: "entities"
+          }
+        ]
+      };
+      fs.writeFileSync(navbarConfigPath, JSON.stringify(navbarConfig, null, 4));
+      console.log(`Created navbar-config.json at ${navbarConfigPath}`);
+    }
   } else {
     console.error(`Template static directory not found at ${templateStaticPath}`);
     // Create empty files to maintain structure

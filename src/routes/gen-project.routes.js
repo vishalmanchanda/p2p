@@ -709,12 +709,29 @@ router.post('/scenario', validate(schemas.scenarioGeneration), async (req, res, 
     
     try {
       // Use AI service to generate scenario HTML
-      const scenarioHtmlResponse = await Promise.race([
-        genAIService.generateCode({
-          prompt: `Generate an HTML page for a scenario called "${scenarioName}" with the following description: "${scenarioDescription}"
+      const prompt = `Generate an HTML page for a scenario called "${scenarioName}" with the following description: "${scenarioDescription}"
 
 This page will be part of a JSON-Server project that has the following entity configurations:
 ${entityConfigsContent}
+
+IMPORTANT: The page should use the common navbar structure of the project by including it like this:
+  
+Add the following to the head section of the HTML file:
+  <!-- PLUGINS CSS STYLE -->
+  <link rel="stylesheet" href="plugins/bootstrap/bootstrap.min.css">
+  <link rel="stylesheet" href="plugins/themify-icons/themify-icons.css">
+  <link rel="stylesheet" href="plugins/slick/slick.css">
+  <link rel="stylesheet" href="plugins/slick/slick-theme.css">
+  <link rel="stylesheet" href="plugins/fancybox/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="plugins/aos/aos.css">
+
+  <!-- CUSTOM CSS -->
+  <link href="css/style.css" rel="stylesheet">
+
+Add the following to the body section of the HTML file:
+<!-- Include Navbar Script -->
+<div id="navbar-container"></div>
+<script src="js/include-navbar.js"></script>
 
 The HTML should:
 1. Use Bootstrap 5 for styling
@@ -735,7 +752,14 @@ Each entity has standard REST endpoints at:
 The code should be fully functional without needing any additional libraries or dependencies.
 Ensure the code handles all API calls properly with loading states and error handling.
 
-The final HTML file must be a complete standalone file with all necessary CSS and JavaScript included.`,
+The page should follow the same structure as other pages in the project, with included navbar at the top.
+The final HTML file must be a complete standalone file with all necessary CSS and JavaScript included.`;
+
+      console.log('Sending prompt to AI service:', prompt);
+
+      const scenarioHtmlResponse = await Promise.race([
+        genAIService.generateCode({
+          prompt,
           language: 'html',
           comments: true,
           maxTokens: 8192
@@ -756,7 +780,7 @@ The final HTML file must be a complete standalone file with all necessary CSS an
       
       // Save the scenario HTML file
       const filename = scenarioName.toLowerCase().replace(/[^a-z0-9]/g, '-') + '.html';
-      const scenarioPath = path.join(staticPath, filename);
+      const scenarioPath = path.join(staticPath,'theme1', filename);
       await fs.writeFile(scenarioPath, scenarioHtml);
       
       // Update index.html to add the scenario to the navbar
@@ -818,6 +842,78 @@ async function updateNavbar(projectPath, scenarioName, filename) {
       }
     } else {
       console.log('Could not find menuConfig array in index.html, skipping navbar update');
+    }
+    
+    // Also update navbar-config.json if it exists
+    const navbarConfigPath = path.join(projectPath, 'static', 'theme1', 'config', 'navbar-config.json');
+    try {
+      await fs.access(navbarConfigPath);
+      
+      // Read navbar config
+      const navbarConfigContent = await fs.readFile(navbarConfigPath, 'utf-8');
+      const navbarConfig = JSON.parse(navbarConfigContent);
+      
+      // Check if the scenario is already in the menu
+      const existingEntry = navbarConfig.menus.find(menu => menu.title === scenarioName);
+      
+      if (!existingEntry) {
+        // Create new menu entry
+        const newMenuItem = {
+          title: scenarioName,
+          url: filename,
+          varname: scenarioName.toLowerCase().replace(/[^a-z0-9]/g, '')
+        };
+        
+        // Add to menus array
+        navbarConfig.menus.push(newMenuItem);
+        
+        // Write updated config back to file
+        await fs.writeFile(navbarConfigPath, JSON.stringify(navbarConfig, null, 4));
+        console.log(`Added "${scenarioName}" to navbar-config.json`);
+      }
+    } catch (navbarError) {
+      console.error('Error updating navbar-config.json:', navbarError);
+      // If the directory doesn't exist, create it and add a basic navbar config
+      if (navbarError.code === 'ENOENT') {
+        try {
+          // Create config directory if it doesn't exist
+          const configDir = path.join(projectPath, 'static', 'config');
+          await fs.mkdir(configDir, { recursive: true });
+          
+          // Create a basic navbar config
+          const navbarConfig = {
+            brand: {
+              url: "index.html",
+              logo: "images/logo.png",
+              alt: "logo"
+            },
+            menus: [
+              {
+                title: "Home",
+                url: "index.html",
+                varname: "home",
+                active: true
+              },
+              {
+                title: "Entities",
+                url: "crud.html",
+                varname: "entities"
+              },
+              {
+                title: scenarioName,
+                url: filename,
+                varname: scenarioName.toLowerCase().replace(/[^a-z0-9]/g, '')
+              }
+            ]
+          };
+          
+          // Write the config file
+          await fs.writeFile(navbarConfigPath, JSON.stringify(navbarConfig, null, 4));
+          console.log(`Created navbar-config.json with "${scenarioName}" entry`);
+        } catch (createError) {
+          console.error('Error creating navbar-config.json:', createError);
+        }
+      }
     }
   } catch (error) {
     console.error('Error updating navbar:', error);

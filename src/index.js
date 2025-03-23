@@ -40,9 +40,10 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       connectSrc: ["'self'", "localhost:*", "127.0.0.1:*"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "cdn.jsdelivr.net"],
+      styleSrc: ["'self'", "'unsafe-inline'", "cdn.jsdelivr.net"],
       imgSrc: ["'self'", "data:"],
+      fontSrc: ["'self'", "cdn.jsdelivr.net"]
     },
   },
 }));
@@ -52,6 +53,11 @@ app.use(morgan('dev'));
 
 // Serve static files from the public directory
 app.use('/public', express.static(path.join(process.cwd(), 'public')));
+
+// Serve wizard UI
+app.get('/wizard', (req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'wizard', 'index.html'));
+});
 
 // Rate limiting
 const apiLimiter = rateLimit({

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const path = require('path');
 const fs = require('fs').promises;
+const fsSync = require('fs'); // Adding regular fs module for createWriteStream
 const generateProjectService = require('../services/generate-project');
 const { validate, schemas } = require('../middleware/validator');
 const { ApiError } = require('../middleware/errorHandler');
@@ -264,6 +265,108 @@ router.get('/list', async (req, res, next) => {
     });
   } catch (error) {
     next(new ApiError('Failed to list projects', 500, 'PROJECT_LIST_ERROR'));
+  }
+});
+
+/**
+ * @swagger
+ * /generate/project/download/{projectName}:
+ *   get:
+ *     summary: Download a generated project as a ZIP file
+ *     description: Creates a ZIP archive of the generated project and sends it for download
+ *     tags: [Project Generation]
+ *     parameters:
+ *       - name: projectName
+ *         in: path
+ *         required: true
+ *         description: Name of the project to download
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Project ZIP file
+ *         content:
+ *           application/zip:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.get('/download/:projectName', async (req, res, next) => {
+  try {
+    const { projectName } = req.params;
+    const projectPath = path.resolve(process.cwd(), projectName);
+    
+    // Check if project exists
+    try {
+      await fs.access(projectPath);
+    } catch (error) {
+      return next(new ApiError(`Project "${projectName}" not found`, 404, 'PROJECT_NOT_FOUND'));
+    }
+    
+    // Create a temporary directory for the zip file
+    const tempDir = path.join(process.cwd(), 'temp');
+    try {
+      await fs.mkdir(tempDir, { recursive: true });
+    } catch (error) {
+      // Ignore error if directory already exists
+    }
+    
+    // Path for the zip file
+    const zipFilePath = path.join(tempDir, `${projectName}.zip`);
+    
+    // Use archiver to create a zip file
+    const archiver = require('archiver');
+    const output = fsSync.createWriteStream(zipFilePath);
+    const archive = archiver('zip', {
+      zlib: { level: 9 } // Maximum compression
+    });
+    
+    // Handle output stream close
+    output.on('close', () => {
+      console.log(`Zip created: ${zipFilePath} (${archive.pointer()} bytes)`);
+      
+      // Set headers for file download
+      res.setHeader('Content-Type', 'application/zip');
+      res.setHeader('Content-Disposition', `attachment; filename=${projectName}.zip`);
+      
+      // Send the file
+      res.sendFile(zipFilePath, (err) => {
+        if (err) {
+          next(new ApiError('Error sending file', 500, 'FILE_SEND_ERROR'));
+        }
+        
+        // Delete the zip file after sending
+        setTimeout(async () => {
+          try {
+            await fs.unlink(zipFilePath);
+            console.log(`Deleted temporary zip file: ${zipFilePath}`);
+          } catch (error) {
+            console.error('Error deleting temporary zip file:', error);
+          }
+        }, 5000);
+      });
+    });
+    
+    // Handle archiver errors
+    archive.on('error', (err) => {
+      throw new Error(`Zip error: ${err.message}`);
+    });
+    
+    // Pipe archive data to the output file
+    archive.pipe(output);
+    
+    // Add all files in the project directory to the archive
+    archive.directory(projectPath, projectName);
+    
+    // Finalize the archive (write the zip)
+    await archive.finalize();
+  } catch (error) {
+    console.error('Error creating project zip:', error);
+    next(new ApiError(`Failed to create project zip: ${error.message}`, 500, 'ZIP_CREATION_ERROR'));
   }
 });
 

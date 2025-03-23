@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate Prototype Project</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        .wizard-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .step {
+            display: none;
+        }
+        .step.active {
+            display: block;
+        }
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        .step-indicator::before {
+            content: '';
+            position: absolute;
+            top: 18px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #e9ecef;
+            z-index: -1;
+        }
+        .step-indicator-item {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background-color: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            z-index: 1;
+        }
+        .step-indicator-item.active {
+            background-color: #007bff;
+            color: white;
+        }
+        .step-indicator-item.completed {
+            background-color: #28a745;
+            color: white;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        #entity-configs-editor, #requirements-text {
+            font-family: monospace;
+            resize: vertical;
+            min-height: 200px;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 2s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 5px;
+            color: white;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            opacity: 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .notification.success {
+            background-color: #28a745;
+        }
+        .notification.error {
+            background-color: #dc3545;
+        }
+        .notification.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="wizard-container">
+        <h2 class="text-center mb-4">Generate Prototype Project</h2>
+        
+        <div class="step-indicator">
+            <div class="step-indicator-item active" data-step="1">1</div>
+            <div class="step-indicator-item" data-step="2">2</div>
+            <div class="step-indicator-item" data-step="3">3</div>
+            <div class="step-indicator-item" data-step="4">4</div>
+        </div>
+        
+        <!-- Step 1: Requirements Input -->
+        <div class="step active" id="step1">
+            <h3>Step 1: Define Project Requirements</h3>
+            <p class="text-muted">Start by describing your project's entities and their fields.</p>
+            
+            <div class="mb-3">
+                <label for="project-name" class="form-label">Project Name:</label>
+                <input type="text" class="form-control" id="project-name" placeholder="e.g., e-commerce-api">
+                <div class="form-text">Use only letters, numbers, hyphens, and underscores.</div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="requirements-text" class="form-label">Project Requirements:</label>
+                <textarea class="form-control" id="requirements-text" rows="8" placeholder="Describe your project entities and their fields. Example: Create a project with User and Product entities. User has fields: name, email, password. Product has fields: title, price, description, category."></textarea>
+            </div>
+            
+            <div class="mb-3">
+                <label for="port-number" class="form-label">JSON-Server Port:</label>
+                <input type="number" class="form-control" id="port-number" value="3002" min="1024" max="65535">
+            </div>
+            
+            <div class="d-flex justify-content-between mt-4">
+                <button id="test-connection-btn" class="btn btn-outline-secondary">
+                    <i class="bi bi-check-circle"></i> Test Connection
+                </button>
+                <button id="next-step1" class="btn btn-primary">Next <i class="bi bi-arrow-right"></i></button>
+            </div>
+        </div>
+        
+        <!-- Step 2: Generate Entity Configurations -->
+        <div class="step" id="step2">
+            <h3>Step 2: Entity Configurations</h3>
+            <p class="text-muted">Review and edit the generated entity configurations.</p>
+            
+            <div class="mb-3">
+                <label for="entity-configs-editor" class="form-label">Entity Configurations:</label>
+                <textarea class="form-control" id="entity-configs-editor" rows="12"></textarea>
+            </div>
+            
+            <div class="d-flex justify-content-between mt-4">
+                <button id="prev-step2" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Previous</button>
+                <button id="generate-entity-configs" class="btn btn-primary">
+                    <span id="generate-entity-configs-spinner" class="d-none">
+                        <span class="loader"></span>
+                    </span>
+                    Generate Entity Configs
+                </button>
+                <button id="next-step2" class="btn btn-primary" disabled>Next <i class="bi bi-arrow-right"></i></button>
+            </div>
+        </div>
+        
+        <!-- Step 3: Generate Project Structure -->
+        <div class="step" id="step3">
+            <h3>Step 3: Generate Project Structure</h3>
+            <p class="text-muted">Generate the complete project structure based on your requirements.</p>
+            
+            <div class="mb-3">
+                <div class="card">
+                    <div class="card-header">Project Details</div>
+                    <div class="card-body">
+                        <p><strong>Project Name:</strong> <span id="project-name-display"></span></p>
+                        <p><strong>Port:</strong> <span id="port-display"></span></p>
+                        <p><strong>Entities:</strong> <span id="entities-display"></span></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Project Generation Status:</label>
+                <pre id="project-gen-status">Ready to generate project...</pre>
+            </div>
+            
+            <div class="d-flex justify-content-between mt-4">
+                <button id="prev-step3" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Previous</button>
+                <button id="generate-project-btn" class="btn btn-primary">
+                    <span id="generate-project-spinner" class="d-none">
+                        <span class="loader"></span>
+                    </span>
+                    Generate Project
+                </button>
+                <button id="next-step3" class="btn btn-primary" disabled>Next <i class="bi bi-arrow-right"></i></button>
+            </div>
+        </div>
+        
+        <!-- Step 4: Download Project -->
+        <div class="step" id="step4">
+            <h3>Step 4: Download Project</h3>
+            <p class="text-muted">Your project has been generated. Download it as a ZIP file.</p>
+            
+            <div class="mb-3">
+                <div class="card">
+                    <div class="card-header">Generated Project Details</div>
+                    <div class="card-body">
+                        <p><strong>Project Path:</strong> <span id="project-path-display"></span></p>
+                        <p><strong>Generated Files:</strong></p>
+                        <ul id="generated-files-list">
+                            <li>db/db.json - Initial database</li>
+                            <li>static/entity-configs.js - Entity configurations</li>
+                            <li>static/crud.js - CRUD operations</li>
+                            <li>static/crud.html - UI for managing entities</li>
+                            <li>requirements/requirements.txt - Project requirements</li>
+                            <li>start.sh & start.bat - Scripts to start JSON Server</li>
+                            <li>mock/generate-mock-data.js - Script to generate mock data</li>
+                            <li>package.json - Project configuration</li>
+                            <li>README.md - Project documentation</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between mt-4">
+                <button id="prev-step4" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Previous</button>
+                <button id="download-zip-btn" class="btn btn-success">
+                    <i class="bi bi-download"></i> Download Project ZIP
+                </button>
+                <button id="start-over-btn" class="btn btn-outline-primary">Start Over</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notification div -->
+    <div id="notification" class="notification">
+        <span id="notification-message"></span>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/public/wizard/wizard.js"></script>
+</body>
+</html> 

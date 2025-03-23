@@ -636,7 +636,106 @@
                     <button id="download-zip-btn" class="btn btn-success">
                         <i class="bi bi-download me-1"></i> Download Project ZIP
                     </button>
-                    <button id="start-over-btn" class="btn btn-outline-primary">
+                    <button id="next-step4" class="btn btn-primary">
+                        Create Scenarios <i class="bi bi-arrow-right ms-1"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 5: Generate Scenario -->
+            <div class="step" id="step5">
+                <div class="step-title pt-4 mb-1">
+                    <i class="bi bi-diagram-3"></i>
+                    <h3>Generate Scenario Page</h3>
+                </div>
+                <p class="step-subtitle mt-0">Create a custom scenario page for your project that uses your entity APIs.</p>
+                
+                <div class="step-content">
+                    <div class="alert alert-info d-flex align-items-center" role="alert">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <div>
+                            Create a scenario page that implements a specific workflow using your entity APIs. This page will be added to your project and integrated with the navigation.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="scenario-name" class="form-label"><i class="bi bi-tag me-2"></i>Scenario Name:</label>
+                        <input type="text" class="form-control" id="scenario-name" placeholder="e.g., Dashboard, Analytics, User Management">
+                        <div class="form-text">This name will appear in the navigation menu of your application.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="scenario-description" class="form-label"><i class="bi bi-card-text me-2"></i>Scenario Description:</label>
+                        <textarea class="form-control" id="scenario-description" rows="6" placeholder="Describe the scenario in detail. For example: Create a dashboard that shows charts of product sales by category, with a table of recent orders and a form to add new products."></textarea>
+                        <div class="form-text">Be specific about what functionality you want on the page and how it should interact with your entities.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label"><i class="bi bi-database me-2"></i>Available Entities:</label>
+                        <div id="scenario-entities-display" class="mb-2">
+                            <!-- Entities badges will be inserted here dynamically -->
+                        </div>
+                        <div class="form-text">These are the entities that can be used in your scenario page.</div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between mt-4">
+                    <button id="prev-step5" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i> Previous
+                    </button>
+                    <button id="generate-scenario-btn" class="btn btn-primary">
+                        <span id="generate-scenario-spinner" class="d-none">
+                            <span class="loader"></span>
+                        </span>
+                        <i class="bi bi-code-slash me-1"></i> Generate Scenario Page
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Step 6: Scenario Success -->
+            <div class="step" id="step6">
+                <div class="step-title pt-4 mb-1">
+                    <i class="bi bi-check-circle"></i>
+                    <h3>Scenario Generated</h3>
+                </div>
+                <p class="step-subtitle mt-0">Your scenario page has been generated successfully!</p>
+                
+                <div class="step-content">
+                    <div class="alert alert-success d-flex align-items-center" role="alert">
+                        <i class="bi bi-check-circle-fill me-2"></i>
+                        <div>
+                            Your scenario page has been created and added to the project navigation!
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-3">
+                        <div class="card-header d-flex align-items-center">
+                            <i class="bi bi-file-earmark-code me-2"></i> Scenario Details
+                        </div>
+                        <div class="card-body">
+                            <p><strong><i class="bi bi-tag me-2"></i>Scenario Name:</strong> <span id="scenario-name-display"></span></p>
+                            <p><strong><i class="bi bi-file-earmark-html me-2"></i>Generated File:</strong> <span id="scenario-file-display" class="text-monospace"></span></p>
+                            
+                            <div class="alert alert-info mt-3 mb-0" role="alert">
+                                <h5 class="alert-heading"><i class="bi bi-lightbulb-fill me-2"></i>How to Access Your Scenario</h5>
+                                <p>Once you start your JSON-Server, you can access your scenario page through:</p>
+                                <ol class="mb-0">
+                                    <li>Go to <code>http://localhost:<span id="scenario-port-display">3002</span>/static/index.html</code></li>
+                                    <li>Click on your scenario name in the navigation menu</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between mt-4">
+                    <button id="prev-step6" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i> Previous
+                    </button>
+                    <button id="create-another-scenario-btn" class="btn btn-outline-primary">
+                        <i class="bi bi-plus-circle me-1"></i> Create Another Scenario
+                    </button>
+                    <button id="start-over-btn" class="btn btn-success">
                         <i class="bi bi-arrow-repeat me-1"></i> Start Over
                     </button>
                 </div>

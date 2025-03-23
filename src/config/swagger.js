@@ -1094,56 +1094,121 @@ const options = {
       },
       responses: {
         BadRequest: {
-          description: 'Bad Request',
+          description: 'Bad Request - The request was malformed or contains invalid parameters',
           content: {
             'application/json': {
               schema: {
-                $ref: '#/components/schemas/Error',
-              },
-              example: {
-                success: false,
-                error: {
-                  message: 'Validation error: "prompt" is required',
-                  code: 'VALIDATION_ERROR',
-                },
-              },
-            },
-          },
+                type: 'object',
+                properties: {
+                  success: {
+                    type: 'boolean',
+                    example: false
+                  },
+                  error: {
+                    type: 'object',
+                    properties: {
+                      message: {
+                        type: 'string',
+                        example: 'Invalid request parameters'
+                      },
+                      code: {
+                        type: 'string',
+                        example: 'INVALID_REQUEST'
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         },
-        InternalServerError: {
-          description: 'Internal Server Error',
+        NotFound: {
+          description: 'Not Found - The requested resource was not found',
           content: {
             'application/json': {
               schema: {
-                $ref: '#/components/schemas/Error',
-              },
-              example: {
-                success: false,
-                error: {
-                  message: 'Internal Server Error',
-                  code: 'INTERNAL_SERVER_ERROR',
-                },
-              },
-            },
-          },
+                type: 'object',
+                properties: {
+                  success: {
+                    type: 'boolean',
+                    example: false
+                  },
+                  error: {
+                    type: 'object',
+                    properties: {
+                      message: {
+                        type: 'string',
+                        example: 'Resource not found'
+                      },
+                      code: {
+                        type: 'string',
+                        example: 'NOT_FOUND'
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         },
         TooManyRequests: {
-          description: 'Too Many Requests',
+          description: 'Too Many Requests - The user has sent too many requests in a given amount of time',
           content: {
             'application/json': {
               schema: {
-                $ref: '#/components/schemas/Error',
-              },
-              example: {
-                success: false,
-                error: {
-                  message: 'Too many requests, please try again later.',
-                  code: 'RATE_LIMIT_EXCEEDED',
-                },
-              },
-            },
-          },
+                type: 'object',
+                properties: {
+                  success: {
+                    type: 'boolean',
+                    example: false
+                  },
+                  error: {
+                    type: 'object',
+                    properties: {
+                      message: {
+                        type: 'string',
+                        example: 'Too many requests, please try again later'
+                      },
+                      code: {
+                        type: 'string',
+                        example: 'RATE_LIMIT_EXCEEDED'
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         },
+        InternalServerError: {
+          description: 'Internal Server Error - Something went wrong on the server',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: {
+                    type: 'boolean',
+                    example: false
+                  },
+                  error: {
+                    type: 'object',
+                    properties: {
+                      message: {
+                        type: 'string',
+                        example: 'An internal server error occurred'
+                      },
+                      code: {
+                        type: 'string',
+                        example: 'SERVER_ERROR'
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       },
     },
   },

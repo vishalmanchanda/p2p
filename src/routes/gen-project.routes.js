@@ -76,6 +76,37 @@ if (!schemas.entityConfigs) {
   });
 }
 
+// Define validation schema for scenario generation
+if (!schemas.scenarioGeneration) {
+  schemas.scenarioGeneration = require('joi').object({
+    projectName: require('joi').string().required().min(1).max(50)
+      .pattern(/^[a-zA-Z0-9-_]+$/)
+      .messages({
+        'string.empty': 'Project name is required',
+        'string.min': 'Project name must be at least 1 character',
+        'string.max': 'Project name must be at most 50 characters',
+        'string.pattern.base': 'Project name can only contain letters, numbers, hyphens, and underscores',
+        'any.required': 'Project name is required'
+      }),
+    scenarioDescription: require('joi').string().required().min(10).max(5000)
+      .messages({
+        'string.empty': 'Scenario description is required',
+        'string.min': 'Scenario description must be at least 10 characters',
+        'string.max': 'Scenario description must be at most 5000 characters',
+        'any.required': 'Scenario description is required'
+      }),
+    scenarioName: require('joi').string().required().min(1).max(50)
+      .pattern(/^[a-zA-Z0-9-_ ]+$/)
+      .messages({
+        'string.empty': 'Scenario name is required',
+        'string.min': 'Scenario name must be at least 1 character',
+        'string.max': 'Scenario name must be at most 50 characters',
+        'string.pattern.base': 'Scenario name can only contain letters, numbers, hyphens, underscores, and spaces',
+        'any.required': 'Scenario name is required'
+      })
+  });
+}
+
 /**
  * @swagger
  * /generate/project:
@@ -522,7 +553,7 @@ const configuredEntities = [{name: 'entityName', config: entityConfig}, ...];
               maxTokens: 4096
             }),
             new Promise((_, reject) => 
-              setTimeout(() => reject(new Error('AI service timeout')), 30000)
+              setTimeout(() => reject(new Error('AI service timeout')), 60000)
             )
           ]);
           
@@ -587,6 +618,212 @@ const configuredEntities = [{name: 'entityName', config: entityConfig}, ...];
     next(new ApiError(`Error processing request: ${error.message}`, 500, 'REQUEST_PROCESSING_ERROR'));
   }
 });
+
+/**
+ * @swagger
+ * /generate/project/scenario:
+ *   post:
+ *     summary: Generate a scenario HTML page for a project
+ *     description: Creates a custom HTML page for a given scenario that uses the generated entity APIs
+ *     tags: [Project Generation]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - projectName
+ *               - scenarioDescription
+ *               - scenarioName
+ *             properties:
+ *               projectName:
+ *                 type: string
+ *                 description: Name of the existing project
+ *                 example: e-commerce-api
+ *               scenarioDescription:
+ *                 type: string
+ *                 description: Detailed description of the scenario (workflow)
+ *                 example: "Create a dashboard that shows the count of products by category, with a form to add new products and a table to view all users."
+ *               scenarioName:
+ *                 type: string
+ *                 description: Name for the scenario (used for file naming and navbar entry)
+ *                 example: Dashboard
+ *     responses:
+ *       200:
+ *         description: Successfully generated scenario page
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "Scenario page generated successfully"
+ *                     scenarioPath:
+ *                       type: string
+ *                       example: "/path/to/generated/scenario.html"
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.post('/scenario', validate(schemas.scenarioGeneration), async (req, res, next) => {
+  try {
+    const { projectName, scenarioDescription, scenarioName } = req.body;
+    
+    // Check if project exists
+    const projectPath = path.resolve(process.cwd(), projectName);
+    try {
+      await fs.access(projectPath);
+    } catch (error) {
+      return next(new ApiError(`Project "${projectName}" not found`, 404, 'PROJECT_NOT_FOUND'));
+    }
+    
+    // Check if static folder exists
+    const staticPath = path.join(projectPath, 'static');
+    try {
+      await fs.access(staticPath);
+    } catch (error) {
+      return next(new ApiError(`Static folder not found in project "${projectName}"`, 404, 'STATIC_FOLDER_NOT_FOUND'));
+    }
+    
+    // Read entity-configs.js file to understand the entities
+    const entityConfigsPath = path.join(staticPath, 'entity-configs.js');
+    let entityConfigsContent;
+    try {
+      entityConfigsContent = await fs.readFile(entityConfigsPath, 'utf-8');
+    } catch (error) {
+      return next(new ApiError(`Failed to read entity configurations for project "${projectName}"`, 500, 'ENTITY_CONFIG_READ_ERROR'));
+    }
+    
+    // Generate the scenario HTML
+    const genAIService = require('../services/gen-ai.service');
+    console.log(`Generating scenario page for "${scenarioName}"`);
+    
+    try {
+      // Use AI service to generate scenario HTML
+      const scenarioHtmlResponse = await Promise.race([
+        genAIService.generateCode({
+          prompt: `Generate an HTML page for a scenario called "${scenarioName}" with the following description: "${scenarioDescription}"
+
+This page will be part of a JSON-Server project that has the following entity configurations:
+${entityConfigsContent}
+
+The HTML should:
+1. Use Bootstrap 5 for styling
+2. Use Font Awesome 6 for icons
+3. Use jQuery for AJAX calls and DOM manipulation
+4. Include a full working implementation of the scenario
+5. Make API calls to the entity endpoints as defined in the entity configurations
+6. Include proper error handling for all API calls
+7. Have a clean, modern design with responsive layout
+
+Each entity has standard REST endpoints at:
+- GET /{entityName} - Gets all records
+- GET /{entityName}/{id} - Gets a single record by ID
+- POST /{entityName} - Creates a new record
+- PUT /{entityName}/{id} - Updates a record
+- DELETE /{entityName}/{id} - Deletes a record
+
+The code should be fully functional without needing any additional libraries or dependencies.
+Ensure the code handles all API calls properly with loading states and error handling.
+
+The final HTML file must be a complete standalone file with all necessary CSS and JavaScript included.`,
+          language: 'html',
+          comments: true,
+          maxTokens: 8192
+        }),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('AI service timeout')), 240000)
+        )
+      ]);
+      
+      let scenarioHtml;
+      if (scenarioHtmlResponse && (scenarioHtmlResponse.text || scenarioHtmlResponse.code || scenarioHtmlResponse.content)) {
+        scenarioHtml = scenarioHtmlResponse.text || scenarioHtmlResponse.code || scenarioHtmlResponse.content;
+      } else if (typeof scenarioHtmlResponse === 'string') {
+        scenarioHtml = scenarioHtmlResponse;
+      } else {
+        throw new Error('Unable to extract valid HTML from AI response');
+      }
+      
+      // Save the scenario HTML file
+      const filename = scenarioName.toLowerCase().replace(/[^a-z0-9]/g, '-') + '.html';
+      const scenarioPath = path.join(staticPath, filename);
+      await fs.writeFile(scenarioPath, scenarioHtml);
+      
+      // Update index.html to add the scenario to the navbar
+      await updateNavbar(projectPath, scenarioName, filename);
+      
+      res.status(200).json({
+        success: true,
+        data: {
+          message: `Scenario page "${scenarioName}" has been generated successfully.`,
+          scenarioPath,
+          scenarioFilename: filename
+        }
+      });
+    } catch (error) {
+      console.error('Error generating scenario HTML:', error);
+      return next(new ApiError(`Failed to generate scenario HTML: ${error.message}`, 500, 'SCENARIO_GENERATION_ERROR'));
+    }
+  } catch (error) {
+    console.error('Error in scenario generation endpoint:', error);
+    next(new ApiError(`Failed to generate scenario: ${error.message}`, 500, 'SCENARIO_GENERATION_ERROR'));
+  }
+});
+
+/**
+ * Update the project's index.html to add the new scenario to the navbar
+ * @param {string} projectPath - Path to the project
+ * @param {string} scenarioName - Name of the scenario
+ * @param {string} filename - Filename of the scenario HTML
+ */
+async function updateNavbar(projectPath, scenarioName, filename) {
+  const indexPath = path.join(projectPath, 'static', 'index.html');
+  
+  try {
+    // Check if index.html exists
+    await fs.access(indexPath);
+    
+    // Read the index.html file
+    let indexContent = await fs.readFile(indexPath, 'utf-8');
+    
+    // Check if the project uses a menu configuration array
+    if (indexContent.includes('const menuConfig =')) {
+      // Find the menuConfig array
+      const menuConfigRegex = /(const\s+menuConfig\s*=\s*\[)([\s\S]*?)(\];)/m;
+      const menuConfigMatch = indexContent.match(menuConfigRegex);
+      
+      if (menuConfigMatch) {
+        // Check if the scenario is already in the menu
+        if (!indexContent.includes(`name: '${scenarioName}'`)) {
+          // Add the scenario to the menu
+          const scenarioMenuItem = `    { name: '${scenarioName}', icon: 'fa-diagram-project', url: '${filename}' },`;
+          
+          // Insert the new menu item before the closing bracket
+          const updatedMenuConfig = `${menuConfigMatch[1]}${menuConfigMatch[2]}${scenarioMenuItem}\n${menuConfigMatch[3]}`;
+          indexContent = indexContent.replace(menuConfigRegex, updatedMenuConfig);
+          
+          // Write the updated content back to the file
+          await fs.writeFile(indexPath, indexContent);
+        }
+      }
+    } else {
+      console.log('Could not find menuConfig array in index.html, skipping navbar update');
+    }
+  } catch (error) {
+    console.error('Error updating navbar:', error);
+    // We'll continue even if navbar update fails
+  }
+}
 
 router.get('/test', (req, res) => {
   res.status(200).json({

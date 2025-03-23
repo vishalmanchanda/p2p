@@ -11,6 +11,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let generatedProjectName = '';
     let entityConfigs = '';
     let detectedEntities = [];
+    let scenarioGenerated = false;
+    let generatedScenarioPath = '';
+    let generatedScenarioFilename = '';
     
     // DOM Elements
     const steps = document.querySelectorAll('.step');
@@ -48,6 +51,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const finalPortDisplay = document.getElementById('final-port-display');
     const prevStep4Btn = document.getElementById('prev-step4');
     const downloadZipBtn = document.getElementById('download-zip-btn');
+    const nextStep4Btn = document.getElementById('next-step4');
+    
+    // Step 5 Elements
+    const scenarioNameInput = document.getElementById('scenario-name');
+    const scenarioDescriptionTextarea = document.getElementById('scenario-description');
+    const scenarioEntitiesDisplay = document.getElementById('scenario-entities-display');
+    const prevStep5Btn = document.getElementById('prev-step5');
+    const generateScenarioBtn = document.getElementById('generate-scenario-btn');
+    const generateScenarioSpinner = document.getElementById('generate-scenario-spinner');
+    
+    // Step 6 Elements
+    const scenarioNameDisplay = document.getElementById('scenario-name-display');
+    const scenarioFileDisplay = document.getElementById('scenario-file-display');
+    const scenarioPortDisplay = document.getElementById('scenario-port-display');
+    const prevStep6Btn = document.getElementById('prev-step6');
+    const createAnotherScenarioBtn = document.getElementById('create-another-scenario-btn');
     const startOverBtn = document.getElementById('start-over-btn');
     
     // Help button
@@ -73,6 +92,29 @@ document.addEventListener('DOMContentLoaded', function() {
     
     prevStep4Btn.addEventListener('click', () => goToStep(3));
     downloadZipBtn.addEventListener('click', downloadProjectZip);
+    nextStep4Btn.addEventListener('click', () => {
+        if (projectGenerated) {
+            // Update the entities display in the scenario step
+            updateScenarioEntitiesDisplay();
+            goToStep(5);
+        } else {
+            showNotification('Please generate the project first', 'error');
+        }
+    });
+    
+    prevStep5Btn.addEventListener('click', () => goToStep(4));
+    generateScenarioBtn.addEventListener('click', generateScenario);
+    
+    prevStep6Btn.addEventListener('click', () => goToStep(5));
+    createAnotherScenarioBtn.addEventListener('click', () => {
+        // Reset scenario form fields
+        scenarioNameInput.value = '';
+        scenarioDescriptionTextarea.value = '';
+        scenarioGenerated = false;
+        generatedScenarioPath = '';
+        generatedScenarioFilename = '';
+        goToStep(5);
+    });
     startOverBtn.addEventListener('click', startOver);
     
     // Add help tooltip
@@ -94,21 +136,25 @@ document.addEventListener('DOMContentLoaded', function() {
         // Show the target step
         document.getElementById(`step${step}`).classList.add('active');
         
-        // Update step indicators
+        // Update step indicators - Note: We only have 4 indicators but 6 steps
+        // Steps 5 and 6 will use the same indicator as step 4
+        const visibleSteps = Math.min(4, stepIndicators.length);
+        const progressStep = Math.min(step, visibleSteps);
+        
         stepIndicators.forEach(indicator => {
             const indicatorStep = parseInt(indicator.getAttribute('data-step'));
             
             indicator.classList.remove('active', 'completed');
             
-            if (indicatorStep === step) {
+            if (indicatorStep === progressStep) {
                 indicator.classList.add('active');
-            } else if (indicatorStep < step) {
+            } else if (indicatorStep < progressStep) {
                 indicator.classList.add('completed');
             }
         });
         
-        // Update progress bar
-        const progressPercentage = ((step - 1) / (stepIndicators.length - 1)) * 100;
+        // Update progress bar - Use the 4 visible steps for progress calculation
+        const progressPercentage = ((progressStep - 1) / (visibleSteps - 1)) * 100;
         progressBar.style.width = `${progressPercentage}%`;
         
         currentStep = step;
@@ -127,6 +173,19 @@ document.addEventListener('DOMContentLoaded', function() {
         if (step === 4) {
             // Update project path display
             projectPathDisplay.textContent = generatedProjectPath;
+        }
+        
+        if (step === 5) {
+            // Update scenario entities display
+            updateScenarioEntitiesDisplay();
+            scenarioPortDisplay.textContent = portNumberInput.value;
+        }
+        
+        if (step === 6) {
+            // Update scenario details display
+            scenarioNameDisplay.textContent = scenarioNameInput.value;
+            scenarioFileDisplay.textContent = generatedScenarioFilename;
+            scenarioPortDisplay.textContent = portNumberInput.value;
         }
         
         // Scroll to top when changing steps
@@ -399,7 +458,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 // Project generated successfully
                 generatedProjectPath = data.data.projectPath;
-                generatedProjectName = data.data.projectName;
+                generatedProjectName = data.data.projectName || projectName;
                 projectGenerated = true;
                 
                 // Update status with success styling
@@ -454,6 +513,117 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    function updateScenarioEntitiesDisplay() {
+        // Clear previous content
+        scenarioEntitiesDisplay.innerHTML = '';
+        
+        if (detectedEntities.length === 0) {
+            scenarioEntitiesDisplay.innerHTML = '<span class="text-muted">None detected</span>';
+            return;
+        }
+        
+        // Create entity badges
+        detectedEntities.forEach(entity => {
+            const badge = document.createElement('span');
+            badge.className = 'entity-badge';
+            badge.innerHTML = `<i class="bi bi-table me-1"></i>${entity}`;
+            scenarioEntitiesDisplay.appendChild(badge);
+        });
+    }
+    
+    async function generateScenario() {
+        // Validate inputs
+        if (!validateScenario()) {
+            return;
+        }
+        
+        const scenarioName = scenarioNameInput.value.trim();
+        const scenarioDescription = scenarioDescriptionTextarea.value.trim();
+        
+        // Show spinner and disable button
+        generateScenarioBtn.disabled = true;
+        if (generateScenarioSpinner) {
+            generateScenarioSpinner.classList.remove('d-none');
+        }
+        
+        try {
+            // Prepare the request payload
+            const payload = {
+                projectName: generatedProjectName,
+                scenarioName,
+                scenarioDescription
+            };
+            
+            // Call the API to generate the scenario
+            const response = await fetch(`${PROJECT_GEN_API}/scenario`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload)
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`API error: ${response.status} ${errorText}`);
+            }
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Scenario generated successfully
+                generatedScenarioPath = data.data.scenarioPath || '';
+                generatedScenarioFilename = data.data.scenarioFilename || '';
+                scenarioGenerated = true;
+                
+                showNotification('Scenario page generated successfully!', 'success');
+                goToStep(6);
+            } else {
+                throw new Error(data.error?.message || 'Unknown error');
+            }
+        } catch (error) {
+            console.error('Error generating scenario:', error);
+            showNotification('Error generating scenario: ' + error.message, 'error');
+        } finally {
+            // Hide spinner and enable button
+            generateScenarioBtn.disabled = false;
+            if (generateScenarioSpinner) {
+                generateScenarioSpinner.classList.add('d-none');
+            }
+        }
+    }
+    
+    function validateScenario() {
+        const scenarioName = scenarioNameInput.value.trim();
+        const scenarioDescription = scenarioDescriptionTextarea.value.trim();
+        
+        if (!scenarioName) {
+            showNotification('Scenario name is required', 'error');
+            scenarioNameInput.focus();
+            return false;
+        }
+        
+        if (!/^[a-zA-Z0-9-_ ]+$/.test(scenarioName)) {
+            showNotification('Scenario name can only contain letters, numbers, hyphens, underscores, and spaces', 'error');
+            scenarioNameInput.focus();
+            return false;
+        }
+        
+        if (!scenarioDescription) {
+            showNotification('Scenario description is required', 'error');
+            scenarioDescriptionTextarea.focus();
+            return false;
+        }
+        
+        if (scenarioDescription.length < 10) {
+            showNotification('Scenario description must be at least 10 characters', 'error');
+            scenarioDescriptionTextarea.focus();
+            return false;
+        }
+        
+        return true;
+    }
+    
     function startOver() {
         // Reset state
         currentStep = 1;
@@ -463,6 +633,9 @@ document.addEventListener('DOMContentLoaded', function() {
         generatedProjectName = '';
         entityConfigs = '';
         detectedEntities = [];
+        scenarioGenerated = false;
+        generatedScenarioPath = '';
+        generatedScenarioFilename = '';
         
         // Reset form fields
         projectNameInput.value = '';
@@ -470,6 +643,8 @@ document.addEventListener('DOMContentLoaded', function() {
         portNumberInput.value = '3002';
         entityConfigsEditor.value = '';
         projectGenStatus.textContent = 'Ready to generate project...';
+        scenarioNameInput.value = '';
+        scenarioDescriptionTextarea.value = '';
         
         // Reset buttons
         nextStep2Btn.disabled = true;

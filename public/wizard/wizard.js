@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const prevStep2Btn = document.getElementById('prev-step2');
     const generateEntityConfigsBtn = document.getElementById('generate-entity-configs');
     const generateEntityConfigsSpinner = document.getElementById('generate-entity-configs-spinner');
+    const useLLMGenerateCheckbox = document.getElementById('use-llm-generate');
     const nextStep2Btn = document.getElementById('next-step2');
     
     // Step 3 Elements
@@ -212,41 +213,128 @@ document.addEventListener('DOMContentLoaded', function() {
         const requirements = requirementsTextarea.value.trim();
         const port = portNumberInput.value;
         const useLLM = useLLMCheckbox && useLLMCheckbox.checked;
+        const useLLMGenerate = useLLMGenerateCheckbox && useLLMGenerateCheckbox.checked;
         
         // Show spinner
         generateEntityConfigsBtn.disabled = true;
         generateEntityConfigsSpinner.classList.remove('d-none');
         
         try {
-            // Use the shared EntityConfigGenerator utility
-            if (!window.EntityConfigGenerator) {
-                throw new Error('Entity configuration generator utility not loaded.');
+            if (useLLMGenerate) {
+                // Use the API to generate entity configs with LLM
+                console.log('Using LLM to generate entity configurations');
+                
+                const payload = {
+                    requirementsText: requirements,
+                    port: parseInt(port),
+                    host: 'localhost',
+                    useLLM: true
+                };
+                
+                // Call API endpoint to generate entity configs with LLM
+                const response = await fetch(`${PROJECT_GEN_API}/entity-configs`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`API error: ${response.status} ${errorText}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success && data.data && data.data.entityConfigs) {
+                    // Display the generated code from the API
+                    entityConfigsEditor.value = data.data.entityConfigs;
+                    entityConfigs = data.data.entityConfigs;
+                    
+                    // Extract entity names for display
+                    if (data.data.entities && Array.isArray(data.data.entities)) {
+                        detectedEntities = data.data.entities;
+                    } else {
+                        // If no entities were returned, try to extract them from the requirements
+                        const entities = EntityConfigGenerator.extractEntitiesFromRequirements(requirements);
+                        detectedEntities = entities.map(entity => entity.name);
+                    }
+                    
+                    entityConfigsGenerated = true;
+                    nextStep2Btn.disabled = false;
+                    updateEntitiesDisplay();
+                    showNotification('Entity configurations generated successfully using AI!', 'success');
+                } else {
+                    throw new Error(data.error?.message || 'Failed to generate entity configurations with AI');
+                }
+            } else {
+                // Use the shared EntityConfigGenerator utility
+                if (!window.EntityConfigGenerator) {
+                    throw new Error('Entity configuration generator utility not loaded.');
+                }
+                
+                // Extract entities from requirements
+                const entities = EntityConfigGenerator.extractEntitiesFromRequirements(requirements);
+                
+                if (entities.length === 0) {
+                    throw new Error('No entities found in requirements. Please format your requirements as: "Entity has fields: field1, field2, etc."');
+                }
+                
+                // Get entity names for display
+                detectedEntities = entities.map(entity => entity.name);
+                
+                // Generate the entity configurations code
+                const generatedCode = EntityConfigGenerator.generateEntityConfigsCode(requirements, port, 'localhost');
+                
+                // Display the generated code
+                entityConfigsEditor.value = generatedCode;
+                entityConfigs = generatedCode;
+                entityConfigsGenerated = true;
+                nextStep2Btn.disabled = false;
+                
+                updateEntitiesDisplay();
+                showNotification(`Entity configurations generated successfully using rule-based generator!`, 'success');
             }
-            
-            // Extract entities from requirements
-            const entities = EntityConfigGenerator.extractEntitiesFromRequirements(requirements);
-            
-            if (entities.length === 0) {
-                throw new Error('No entities found in requirements. Please format your requirements as: "Entity has fields: field1, field2, etc."');
-            }
-            
-            // Get entity names for display
-            detectedEntities = entities.map(entity => entity.name);
-            
-            // Generate the entity configurations code
-            const generatedCode = EntityConfigGenerator.generateEntityConfigsCode(requirements, port, 'localhost');
-            
-            // Display the generated code
-            entityConfigsEditor.value = generatedCode;
-            entityConfigs = generatedCode;
-            entityConfigsGenerated = true;
-            nextStep2Btn.disabled = false;
-            
-            updateEntitiesDisplay();
-            showNotification(`Entity configurations generated successfully${useLLM ? ' (LLM will be used during project generation)' : ' (rule-based generator will be used)'}!`, 'success');
         } catch (error) {
             console.error('Error generating entity configs:', error);
             showNotification('Error generating entity configs: ' + error.message, 'error');
+            
+            // If LLM generation failed, fall back to rule-based
+            if (useLLMGenerate) {
+                showNotification('Falling back to rule-based generator...', 'info');
+                try {
+                    // Use the shared EntityConfigGenerator utility
+                    if (!window.EntityConfigGenerator) {
+                        throw new Error('Entity configuration generator utility not loaded.');
+                    }
+                    
+                    // Extract entities from requirements
+                    const entities = EntityConfigGenerator.extractEntitiesFromRequirements(requirements);
+                    
+                    if (entities.length === 0) {
+                        throw new Error('No entities found in requirements. Please format your requirements as: "Entity has fields: field1, field2, etc."');
+                    }
+                    
+                    // Get entity names for display
+                    detectedEntities = entities.map(entity => entity.name);
+                    
+                    // Generate the entity configurations code
+                    const generatedCode = EntityConfigGenerator.generateEntityConfigsCode(requirements, port, 'localhost');
+                    
+                    // Display the generated code
+                    entityConfigsEditor.value = generatedCode;
+                    entityConfigs = generatedCode;
+                    entityConfigsGenerated = true;
+                    nextStep2Btn.disabled = false;
+                    
+                    updateEntitiesDisplay();
+                    showNotification('Entity configurations generated using rule-based generator as fallback.', 'info');
+                } catch (fallbackError) {
+                    console.error('Error with fallback generation:', fallbackError);
+                    showNotification('Failed to generate entity configs using the fallback method: ' + fallbackError.message, 'error');
+                }
+            }
         } finally {
             // Hide spinner
             generateEntityConfigsBtn.disabled = false;
@@ -268,7 +356,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('useLLMCheckbox:', useLLMCheckbox);
         console.log('useLLMCheckbox checked:', useLLMCheckbox ? useLLMCheckbox.checked : 'checkbox not found');
         
-        // Ensure it's properly cast as a boolean
+        // Use the checkbox from step 1 for project generation
         const useLLM = Boolean(useLLMCheckbox && useLLMCheckbox.checked);
         console.log('Final useLLM value:', useLLM, typeof useLLM);
         

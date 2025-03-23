@@ -21,6 +21,7 @@ const svgRoutes = require('./routes/svg.routes');
 const prototypeRoutes = require('./routes/prototype.routes');
 const prototypeBuilderRoutes = require('./routes/prototype-builder.routes');
 const jdlRoutes = require('./routes/jdl.routes');
+const genProjectRoutes = require('./routes/gen-project.routes');
 
 
 
@@ -29,10 +30,22 @@ const jdlRoutes = require('./routes/jdl.routes');
 const { errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+// Force port to 3005 to avoid conflicts
+const PORT = 3005;
+console.log(`Configured server to use port ${PORT}`);
 
 // Middleware
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      connectSrc: ["'self'", "localhost:*", "127.0.0.1:*"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:"],
+    },
+  },
+}));
 app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
@@ -75,6 +88,7 @@ app.use('/api/generate/svg', svgRoutes);
 app.use('/api/generate/prototype', prototypeRoutes);
 app.use('/api/generate/prototype-builder', prototypeBuilderRoutes);
 app.use('/api/generate/jdl', jdlRoutes);
+app.use('/api/generate/project', genProjectRoutes);
 
 
 // Health check endpoint

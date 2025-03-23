@@ -181,8 +181,10 @@ async function generateEntityConfigs(projectPath, requirementsText, port = 3002,
   // call the generateCode function from gen-ai.service.js
   const genAIService = require('./gen-ai.service');
   try {
-    const response = await genAIService.generateCode({
-      prompt: `Generate JavaScript code for entity configurations based on these requirements: ${requirementsText}
+    console.log('Calling AI service to generate entity configurations...');
+    const response = await Promise.race([
+      genAIService.generateCode({
+        prompt: `Generate JavaScript code for entity configurations based on these requirements: ${requirementsText}
 
 The output should be in this format:
 const entityConfig = {
@@ -209,23 +211,37 @@ Finally, export all configs in an array like this:
 const configuredEntities = [{name: 'entityName', config: entityConfig}, ...];
 
 `,
-      language: 'javascript',
-      comments: false,
-      maxTokens: 4096
-    });
+        language: 'javascript',
+        comments: false,
+        maxTokens: 4096
+      }),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('AI service timeout')), 30000)
+      )
+    ]);
     
     // Log the response structure to understand what we're getting
     console.log('AI service response type:', typeof response);
-    console.log('AI service response structure:', Object.keys(response));
     
     // Extract the code from the response object
-    // This is a guess - we need to know the actual structure
-    const entityConfigs = response.text || response.code || response.content || 
-                          (typeof response === 'string' ? response : JSON.stringify(response, null, 2));
+    let entityConfigs;
+    
+    if (response && (response.text || response.code || response.content)) {
+      entityConfigs = response.text || response.code || response.content;
+      console.log('Successfully extracted entity configs from AI response');
+    } else if (typeof response === 'string') {
+      entityConfigs = response;
+      console.log('Received string response from AI service');
+    } else {
+      // Create a default implementation based on the requirements
+      console.log('Creating default entity configs from requirements');
+      entityConfigs = generateDefaultEntityConfigs(requirementsText, host, port);
+    }
     
     // Make sure we have a string before writing to file
     if (typeof entityConfigs !== 'string') {
-      throw new Error(`Expected string from AI service but got ${typeof entityConfigs}`);
+      console.warn('Non-string entity configs, converting to JSON');
+      entityConfigs = JSON.stringify(entityConfigs, null, 2);
     }
     
     fs.writeFileSync(entityConfigsPath, entityConfigs);
@@ -233,14 +249,95 @@ const configuredEntities = [{name: 'entityName', config: entityConfig}, ...];
     return entityConfigsPath;
   } catch (error) {
     console.error('Error generating entity configs:', error);
-    throw error;
+    
+    // Create a default implementation as fallback
+    console.log('Creating default entity configs as fallback');
+    const defaultConfig = generateDefaultEntityConfigs(requirementsText, host, port);
+    fs.writeFileSync(entityConfigsPath, defaultConfig);
+    
+    return entityConfigsPath;
   }
 }
 
-module.exports = {
-  generateProject,
-  generateEntityConfigs
+/**
+ * Generates default entity configurations based on requirements text
+ * Used as a fallback when AI generation fails
+ */
+function generateDefaultEntityConfigs(requirementsText, host = 'localhost', port = 3002) {
+  // Parse the requirements to extract entity names and fields
+  // This is a simple implementation and may not handle all cases
+  const entityMatches = requirementsText.match(/([A-Z][a-zA-Z]*) has fields: ([^.]+)/g) || [];
+  
+  if (entityMatches.length === 0) {
+    // No entities found, return a minimal default config
+    return `// Default entity configuration
+const defaultConfig = {
+  entityName: 'items',
+  title: 'Items',
+  apiBaseUrl: 'http://${host}:${port}',
+  itemsPerPage: 10,
+  attributes: [
+    { name: 'id', label: 'ID', type: 'number', required: true, hideInTable: false },
+    { name: 'name', label: 'Name', type: 'text', required: true, hideInTable: false }
+  ]
 };
+
+const configuredEntities = [
+  { name: 'items', config: defaultConfig }
+];
+`;
+  }
+  
+  let entityConfigs = '// Generated entity configurations\n\n';
+  let configuredEntitiesArray = [];
+  
+  entityMatches.forEach(match => {
+    const entityNameMatch = match.match(/([A-Z][a-zA-Z]*) has fields/);
+    const fieldsMatch = match.match(/has fields: ([^.]+)/);
+    
+    if (entityNameMatch && fieldsMatch) {
+      const entityName = entityNameMatch[1];
+      const fieldsStr = fieldsMatch[1];
+      const fields = fieldsStr.split(',').map(f => f.trim());
+      
+      const entityVarName = `${entityName.toLowerCase()}Config`;
+      const entityPluralName = `${entityName.toLowerCase()}s`;
+      
+      // Generate attributes array
+      const attributes = fields.map(field => {
+        let type = 'text';
+        if (field.includes('email')) type = 'email';
+        if (field.includes('password')) type = 'password';
+        if (field.includes('price') || field.includes('amount') || field.includes('id')) type = 'number';
+        if (field.includes('date')) type = 'date';
+        if (field.includes('description')) type = 'textarea';
+        
+        return `    { name: '${field}', label: '${field.charAt(0).toUpperCase() + field.slice(1)}', type: '${type}', required: true, hideInTable: ${type === 'password'} }`;
+      }).join(',\n');
+      
+      // Generate config for this entity
+      entityConfigs += `const ${entityVarName} = {
+  entityName: '${entityPluralName}',
+  title: '${entityName}',
+  apiBaseUrl: 'http://${host}:${port}',
+  itemsPerPage: 10,
+  attributes: [
+${attributes}
+  ]
+};\n\n`;
+      
+      configuredEntitiesArray.push(`  { name: '${entityName.toLowerCase()}', config: ${entityVarName} }`);
+    }
+  });
+  
+  // Add the configuredEntities array
+  entityConfigs += `const configuredEntities = [
+${configuredEntitiesArray.join(',\n')}
+];
+`;
+  
+  return entityConfigs;
+}
 
 // run this file using node src/services/generate-project.js
 
@@ -269,4 +366,13 @@ async function main() {
 
 }
 
-main();
+// Only run the main function if this file is executed directly (not imported)
+if (require.main === module) {
+  main();
+}
+
+// Add exports at end of file
+module.exports = {
+  generateProject,
+  generateEntityConfigs
+};

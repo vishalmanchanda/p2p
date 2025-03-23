@@ -1,5 +1,5 @@
 
-# run the server
+# run the main server
 npm run dev
 
 # test local model
@@ -21,9 +21,20 @@ curl -X POST http://localhost:3000/api/generate/code -H "Content-Type: applicati
 # provide requirements and project name in generate-project.js
 node src/services/generate-project.js
 
+
+
 # once the project is generated 
+
+# generate mock data if you want
 cd <projectName>
-./start.sh
+./mock/generate-mock-data.sh
+
+
+# start the server
+cd <projectName>
+./start.sh 
+
+
 
 
 

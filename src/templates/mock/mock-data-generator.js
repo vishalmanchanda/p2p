@@ -9,7 +9,7 @@ class MockDataGenerator {
     this.entityConfigs = entityConfigs;
     this.options = {
       outputFile: 'db.json',
-      recordsPerEntity: 25,
+      recordsPerEntity: 12,
       ...options
     };
     

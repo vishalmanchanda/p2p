@@ -18,6 +18,9 @@
 // │   ├── requirements.txt
 // ├── start.sh
 // ├── start.bat
+// ├── mock
+// │   ├── generate-mock-data.sh
+// │   ├── generate-mock-data.bat
 // ├── package.json
 // └── README.md
 
@@ -31,7 +34,7 @@ const { execSync } = require('child_process');
  * @param {string} requirementsText - Content for requirements.txt file
  * @returns {string} - Path to the created project
  */
-async function generateProject(projectName, requirementsText) {
+async function generateProject(projectName, requirementsText, port = 3002, staticFolder = 'static', host = 'localhost') {
   const projectPath = path.resolve(process.cwd(), projectName);
   
   // Create main project directory
@@ -83,14 +86,29 @@ async function generateProject(projectName, requirementsText) {
   // Create start scripts
   fs.writeFileSync(
     path.join(projectPath, 'start.sh'),
-    '#!/bin/bash\nnode mock/generate-mock-data.js\nnpx json-server --watch db/db.json --port 3002 -s static\n'
+    `#!/bin/bash\nnpx json-server --watch db/db.json --port ${port} -s ${staticFolder}\n`
   );
   fs.chmodSync(path.join(projectPath, 'start.sh'), 0o755);
   
   fs.writeFileSync(
     path.join(projectPath, 'start.bat'),
-    '@echo off\nnode mock/generate-mock-data.js\nnpx json-server --watch db/db.json --port 3002 -s static\n'
+
+    `@echo off\nnpx json-server --watch db/db.json --port ${port} -s ${staticFolder}\n`
   );
+
+  // create mock generation scripts separately from start.sh and start.bat
+  fs.writeFileSync(
+    path.join(projectPath, 'mock', 'generate-mock-data.sh'),
+    '#!/bin/bash\nnode mock/generate-mock-data.js\n'
+  );
+  fs.chmodSync(path.join(projectPath, 'mock', 'generate-mock-data.sh'), 0o755);
+
+  fs.writeFileSync(
+    path.join(projectPath, 'mock', 'generate-mock-data.bat'),
+    '@echo off\nnode mock/generate-mock-data.js\n'
+  );
+
+
   
   // Create package.json
   const packageJson = {
@@ -99,7 +117,7 @@ async function generateProject(projectName, requirementsText) {
     description: 'Generated project',
     main: 'server.js',
     scripts: {
-      start: 'json-server --watch db/db.json --port 3002 -s static'
+      start: 'json-server --watch db/db.json --port ${port} -s ${staticFolder}'
     },
     dependencies: {
       'json-server': '^0.17.0'
@@ -157,7 +175,7 @@ function copyDirectory(source, destination) {
   }
 }
 
-async function generateEntityConfigs(projectPath, requirementsText) {
+async function generateEntityConfigs(projectPath, requirementsText, port = 3002, host = 'localhost') {
   const entityConfigsPath = path.join(projectPath, 'static', 'entity-configs.js');
 
   // call the generateCode function from gen-ai.service.js
@@ -170,7 +188,7 @@ The output should be in this format:
 const entityConfig = {
   entityName: 'entityNamePlural in lowercase',
   title: 'Entity Title',
-  apiBaseUrl: 'http://localhost:3002',
+  apiBaseUrl: 'http://${host}:${port}',
   itemsPerPage: 10,
   attributes: [
     { 
@@ -228,13 +246,26 @@ module.exports = {
 
 // generate project
 async function main() { 
-  const projectName = 'p2';
+// take port , host , staticFolder as optional command line arguments and projectName as required argument and requirementsText as fileName from command line arguments
+// can these arguements be taken as a json object ?
+// const args = process.argv.slice(2);
+// if (process.argv.length < 6) {
+//   console.error('Usage: node generate-project.js <projectName> <requirementsText> [port] [host] [staticFolder]');
+//   process.exit(1);
+// }
+// const { projectName, requirementsText, port, host, staticFolder } = JSON.parse(args);
+
+
+
+
+  const projectName = 'p1';
   const requirementsText1 = 'generate a project with a single entity called "User" with the following fields:  name, email, password';
   const requirementsText2 = 'generate a project with a two entities called "Product" and "Order" with the  fields as :  productId, productName, price, description for Product and  orderId,orderDate, totalAmount, status, customerName  for Order';
-  const projectPath = await generateProject(projectName, requirementsText2);
+  const requirementsText3 = 'Generate a project with four entities called "Dhatu" (verbal root), "Pratyaya" (suffix), "Shabda" (word form), and "Vachya" (voice) with the following fields:  dhatuId, dhatuText, meaning, gana, padi, it, example, notes, pratyayaId, pratyayaText, meaning, type, usage, notes, shabdaId, shabdaText, linga, vibhakti, vachana, pratipadika, notes, vachyaId, vachyaName, transformation, examples, notes';
+  const projectPath = await generateProject(projectName, requirementsText1);
   console.log(projectPath);
   // // generate entity configs
- const entityConfigs = await generateEntityConfigs(projectPath, requirementsText2);
+ const entityConfigs = await generateEntityConfigs(projectPath, requirementsText1, 3002, 'localhost', 'static');
 
 }
 

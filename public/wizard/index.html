@@ -382,6 +382,11 @@
             margin-bottom: 0.5rem;
             color: #666;
         }
+
+        /* Initially hide model selection when checkbox is unchecked */
+        .model-container {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -454,28 +459,63 @@
                         </div>
                     </div>
                     
-                    <div class="mb-3">
-                        <label for="entity-configs-editor" class="form-label"><i class="bi bi-code-slash me-2"></i>Entity Configurations:</label>
-                        <textarea class="form-control" id="entity-configs-editor" rows="12"></textarea>
-                        <div class="form-text">JavaScript code that defines your entities and their fields.</div>
+                    <div class="mb-4 d-flex align-items-center justify-content-between">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="use-llm-generate">
+                            <label class="form-check-label" for="use-llm-generate">
+                                Use AI to generate entity configurations
+                            </label>
+                        </div>
+                        
+                        <div id="llm-model-container" class="d-flex align-items-center model-container">
+                            <label for="llm-model-select" class="me-2">LLM Model:</label>
+                            <select id="llm-model-select" class="form-select form-select-sm" style="width: auto;">
+                                <optgroup label="Ollama Models">
+                                    <option value="deepseek-r1:8b" selected>deepseek-r1:8b</option>
+                                    <option value="deepseek-coder:6.7b">deepseek-coder:6.7b</option>
+                                    <option value="llama3:8b">llama3:8b</option>
+                                    <option value="gemma:7b">gemma:7b</option>
+                                    <option value="mistral:7b">mistral:7b</option>
+                                </optgroup>
+                                <optgroup label="Anthropic Models">
+                                    <option value="claude-3-opus">Claude 3 Opus</option>
+                                    <option value="claude-3-sonnet">Claude 3 Sonnet</option>
+                                    <option value="claude-3-haiku">Claude 3 Haiku</option>
+                                </optgroup>
+                                <optgroup label="Google Models">
+                                    <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                                    <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                                </optgroup>
+                                <optgroup label="OpenAI Models">
+                                    <option value="gpt-4o">GPT-4o</option>
+                                    <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                                </optgroup>
+                            </select>
+                        </div>
                     </div>
                     
-                    <div class="mb-3 form-check">
-                        <input type="checkbox" class="form-check-input" id="use-llm-generate">
-                        <label class="form-check-label" for="use-llm-generate"><i class="bi bi-robot me-2"></i>Use AI to generate entity configurations</label>
-                        <div class="form-text">When enabled, AI model will be used to generate more advanced entity configurations. Otherwise, a rule-based approach will be used.</div>
+                    <div class="alert alert-info mb-4">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <span>If AI generation is enabled, entity configurations will be created using the AI model. Otherwise, a rule-based generator will be used.</span>
+                    </div>
+                    
+                    <div class="d-grid gap-2 mb-4">
+                        <button id="generate-entity-configs" class="btn btn-primary">
+                            <span id="generate-entity-configs-spinner" class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true"></span>
+                            Generate Entity Configurations
+                        </button>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="entity-configs-editor" class="form-label">Entity Configurations</label>
+                        <textarea class="form-control code" id="entity-configs-editor" rows="15"></textarea>
                     </div>
                 </div>
                 
                 <div class="d-flex justify-content-between mt-4">
                     <button id="prev-step2" class="btn btn-outline-secondary">
                         <i class="bi bi-arrow-left me-1"></i> Previous
-                    </button>
-                    <button id="generate-entity-configs" class="btn btn-primary">
-                        <span id="generate-entity-configs-spinner" class="d-none">
-                            <span class="loader"></span>
-                        </span>
-                        <i class="bi bi-lightning-charge me-1"></i> Generate Entity Configs
                     </button>
                     <button id="next-step2" class="btn btn-primary" disabled>
                         Next <i class="bi bi-arrow-right ms-1"></i>
@@ -650,9 +690,37 @@
                         <p>Generate realistic mock data for your entities:</p>
                         
                         <div class="mb-3 form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="use-llm-mock" checked>
+                            <input class="form-check-input" type="checkbox" id="use-llm-mock">
                             <label class="form-check-label" for="use-llm-mock">Use AI for more realistic data</label>
                             <div class="form-text">When enabled, AI will generate contextually appropriate mock data for your entities.</div>
+                        </div>
+                        
+                        <div class="mb-3 model-container" id="mock-data-model-container">
+                            <label for="mock-data-llm-model-select" class="form-label">LLM Model:</label>
+                            <select id="mock-data-llm-model-select" class="form-select">
+                                <optgroup label="Ollama Models">
+                                    <option value="deepseek-r1:8b" selected>deepseek-r1:8b</option>
+                                    <option value="deepseek-coder:6.7b">deepseek-coder:6.7b</option>
+                                    <option value="llama3:8b">llama3:8b</option>
+                                    <option value="gemma:7b">gemma:7b</option>
+                                    <option value="mistral:7b">mistral:7b</option>
+                                </optgroup>
+                                <optgroup label="Anthropic Models">
+                                    <option value="claude-3-opus">Claude 3 Opus</option>
+                                    <option value="claude-3-sonnet">Claude 3 Sonnet</option>
+                                    <option value="claude-3-haiku">Claude 3 Haiku</option>
+                                </optgroup>
+                                <optgroup label="Google Models">
+                                    <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                                    <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                                </optgroup>
+                                <optgroup label="OpenAI Models">
+                                    <option value="gpt-4o">GPT-4o</option>
+                                    <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                                </optgroup>
+                            </select>
+                            <div class="form-text">Select the LLM model to use for generating mock data.</div>
                         </div>
                         
                         <div class="mb-3">
@@ -709,6 +777,33 @@
                             <!-- Entities badges will be inserted here dynamically -->
                         </div>
                         <div class="form-text">These are the entities that can be used in your scenario page.</div>
+                    </div>
+                    
+                    <div class="mb-4 d-flex align-items-center justify-content-between">
+                        <label for="scenario-llm-model-select" class="me-2">LLM Model:</label>
+                        <select id="scenario-llm-model-select" class="form-select" style="width: auto;">
+                            <optgroup label="Ollama Models">
+                                <option value="deepseek-r1:8b" selected>deepseek-r1:8b</option>
+                                <option value="deepseek-coder:6.7b">deepseek-coder:6.7b</option>
+                                <option value="llama3:8b">llama3:8b</option>
+                                <option value="gemma:7b">gemma:7b</option>
+                                <option value="mistral:7b">mistral:7b</option>
+                            </optgroup>
+                            <optgroup label="Anthropic Models">
+                                <option value="claude-3-opus">Claude 3 Opus</option>
+                                <option value="claude-3-sonnet">Claude 3 Sonnet</option>
+                                <option value="claude-3-haiku">Claude 3 Haiku</option>
+                            </optgroup>
+                            <optgroup label="Google Models">
+                                <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                                <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                            </optgroup>
+                            <optgroup label="OpenAI Models">
+                                <option value="gpt-4o">GPT-4o</option>
+                                <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                                <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                            </optgroup>
+                        </select>
                     </div>
                 </div>
                 
@@ -789,5 +884,41 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/public/utils/entity-config-generator.js"></script>
     <script src="/public/wizard/wizard.js"></script>
+    
+    <script>
+        // Function to toggle model selection visibility based on checkbox state
+        function setupModelVisibility() {
+            // Entity configurations model selection
+            const useLlmGenerate = document.getElementById('use-llm-generate');
+            const llmModelContainer = document.getElementById('llm-model-container');
+            
+            if (useLlmGenerate) {
+                // Set initial visibility
+                llmModelContainer.style.display = useLlmGenerate.checked ? 'flex' : 'none';
+                
+                // Add event listener for checkbox change
+                useLlmGenerate.addEventListener('change', function() {
+                    llmModelContainer.style.display = this.checked ? 'flex' : 'none';
+                });
+            }
+            
+            // Mock data model selection
+            const useLlmMock = document.getElementById('use-llm-mock');
+            const mockDataModelContainer = document.getElementById('mock-data-model-container');
+            
+            if (useLlmMock) {
+                // Set initial visibility
+                mockDataModelContainer.style.display = useLlmMock.checked ? 'block' : 'none';
+                
+                // Add event listener for checkbox change
+                useLlmMock.addEventListener('change', function() {
+                    mockDataModelContainer.style.display = this.checked ? 'block' : 'none';
+                });
+            }
+        }
+        
+        // Call the setup function when the DOM is fully loaded
+        document.addEventListener('DOMContentLoaded', setupModelVisibility);
+    </script>
 </body>
 </html> 

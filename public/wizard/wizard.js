@@ -35,6 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const generateEntityConfigsBtn = document.getElementById('generate-entity-configs');
     const generateEntityConfigsSpinner = document.getElementById('generate-entity-configs-spinner');
     const useLLMGenerateCheckbox = document.getElementById('use-llm-generate');
+    const llmModelSelect = document.getElementById('llm-model-select');
     const nextStep2Btn = document.getElementById('next-step2');
     
     // Step 3 Elements
@@ -54,6 +55,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const downloadZipBtn = document.getElementById('download-zip-btn');
     const nextStep4Btn = document.getElementById('next-step4');
     const useLLMMockCheckbox = document.getElementById('use-llm-mock');
+    const mockDataLlmModelSelect = document.getElementById('mock-data-llm-model-select');
     const recordsPerEntityInput = document.getElementById('records-per-entity');
     const generateMockDataBtn = document.getElementById('generate-mock-data-btn');
     const generateMockDataSpinner = document.getElementById('generate-mock-data-spinner');
@@ -64,6 +66,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const scenarioNameInput = document.getElementById('scenario-name');
     const scenarioDescriptionTextarea = document.getElementById('scenario-description');
     const scenarioEntitiesDisplay = document.getElementById('scenario-entities-display');
+    const scenarioLlmModelSelect = document.getElementById('scenario-llm-model-select');
     const prevStep5Btn = document.getElementById('prev-step5');
     const generateScenarioBtn = document.getElementById('generate-scenario-btn');
     const generateScenarioSpinner = document.getElementById('generate-scenario-spinner');
@@ -275,135 +278,69 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     async function generateEntityConfigs() {
-        if (!validateStep1()) return;
+        // Validate requirements text
+        const requirementsText = requirementsTextarea.value.trim();
+        if (!requirementsText) {
+            showNotification('Please enter requirements text', 'error');
+            return;
+        }
         
-        const requirements = requirementsTextarea.value.trim();
-        const port = portNumberInput.value;
-        const useLLM = useLLMCheckbox && useLLMCheckbox.checked;
-        const useLLMGenerate = useLLMGenerateCheckbox && useLLMGenerateCheckbox.checked;
-        
-        // Show spinner
+        // Show loading state
         generateEntityConfigsBtn.disabled = true;
         generateEntityConfigsSpinner.classList.remove('d-none');
+        entityConfigsEditor.value = 'Generating entity configurations...';
         
         try {
-            if (useLLMGenerate) {
-                // Use the API to generate entity configs with LLM
-                console.log('Using LLM to generate entity configurations');
-                
-                const payload = {
-                    requirementsText: requirements,
-                    port: parseInt(port),
-                    host: 'localhost',
-                    useLLM: true
-                };
-                
-                // Call API endpoint to generate entity configs with LLM
-                const response = await fetch(`${PROJECT_GEN_API}/entity-configs`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(payload)
-                });
-                
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`API error: ${response.status} ${errorText}`);
-                }
-                
-                const data = await response.json();
-                
-                if (data.success && data.data && data.data.entityConfigs) {
-                    // Display the generated code from the API
-                    entityConfigsEditor.value = data.data.entityConfigs;
-                    entityConfigs = data.data.entityConfigs;
-                    
-                    // Extract entity names for display
-                    if (data.data.entities && Array.isArray(data.data.entities)) {
-                        detectedEntities = data.data.entities;
-                    } else {
-                        // If no entities were returned, try to extract them from the requirements
-                        const entities = EntityConfigGenerator.extractEntitiesFromRequirements(requirements);
-                        detectedEntities = entities.map(entity => entity.name);
-                    }
-                    
-                    entityConfigsGenerated = true;
-                    nextStep2Btn.disabled = false;
-                    updateEntitiesDisplay();
-                    showNotification('Entity configurations generated successfully using AI!', 'success');
-                } else {
-                    throw new Error(data.error?.message || 'Failed to generate entity configurations with AI');
-                }
-            } else {
-                // Use the shared EntityConfigGenerator utility
-                if (!window.EntityConfigGenerator) {
-                    throw new Error('Entity configuration generator utility not loaded.');
-                }
-                
-                // Extract entities from requirements
-                const entities = EntityConfigGenerator.extractEntitiesFromRequirements(requirements);
-                
-                if (entities.length === 0) {
-                    throw new Error('No entities found in requirements. Please format your requirements as: "Entity has fields: field1, field2, etc."');
-                }
-                
-                // Get entity names for display
-                detectedEntities = entities.map(entity => entity.name);
-                
-                // Generate the entity configurations code
-                const generatedCode = EntityConfigGenerator.generateEntityConfigsCode(requirements, port, 'localhost');
-                
-                // Display the generated code
-                entityConfigsEditor.value = generatedCode;
-                entityConfigs = generatedCode;
-                entityConfigsGenerated = true;
-                nextStep2Btn.disabled = false;
-                
-                updateEntitiesDisplay();
-                showNotification(`Entity configurations generated successfully using rule-based generator!`, 'success');
+            // Get port and useLLM values
+            const port = parseInt(portNumberInput.value) || 3002;
+            const useLLM = useLLMGenerateCheckbox.checked;
+            const llmModel = llmModelSelect.value;
+            
+            // Prepare the request data
+            const requestData = {
+                requirementsText,
+                port,
+                useLLM,
+                llmModel
+            };
+            
+            console.log('Sending entity configs request:', requestData);
+            
+            // Send the request to the API
+            const response = await fetch(`${PROJECT_GEN_API}/entity-configs`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestData)
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to generate entity configurations');
             }
+            
+            // Update the editor with the generated configs
+            entityConfigs = data.data.entityConfigs;
+            entityConfigsEditor.value = entityConfigs;
+            
+            // Store detected entities
+            detectedEntities = data.data.entities || [];
+            
+            // Set the flag
+            entityConfigsGenerated = true;
+            
+            // Enable next button
+            nextStep2Btn.disabled = false;
+            
+            showNotification('Entity configurations generated successfully!', 'success');
         } catch (error) {
             console.error('Error generating entity configs:', error);
-            showNotification('Error generating entity configs: ' + error.message, 'error');
-            
-            // If LLM generation failed, fall back to rule-based
-            if (useLLMGenerate) {
-                showNotification('Falling back to rule-based generator...', 'info');
-                try {
-                    // Use the shared EntityConfigGenerator utility
-                    if (!window.EntityConfigGenerator) {
-                        throw new Error('Entity configuration generator utility not loaded.');
-                    }
-                    
-                    // Extract entities from requirements
-                    const entities = EntityConfigGenerator.extractEntitiesFromRequirements(requirements);
-                    
-                    if (entities.length === 0) {
-                        throw new Error('No entities found in requirements. Please format your requirements as: "Entity has fields: field1, field2, etc."');
-                    }
-                    
-                    // Get entity names for display
-                    detectedEntities = entities.map(entity => entity.name);
-                    
-                    // Generate the entity configurations code
-                    const generatedCode = EntityConfigGenerator.generateEntityConfigsCode(requirements, port, 'localhost');
-                    
-                    // Display the generated code
-                    entityConfigsEditor.value = generatedCode;
-                    entityConfigs = generatedCode;
-                    entityConfigsGenerated = true;
-                    nextStep2Btn.disabled = false;
-                    
-                    updateEntitiesDisplay();
-                    showNotification('Entity configurations generated using rule-based generator as fallback.', 'info');
-                } catch (fallbackError) {
-                    console.error('Error with fallback generation:', fallbackError);
-                    showNotification('Failed to generate entity configs using the fallback method: ' + fallbackError.message, 'error');
-                }
-            }
+            entityConfigsEditor.value = '';
+            showNotification(`Error: ${error.message}`, 'error');
         } finally {
-            // Hide spinner
+            // Reset loading state
             generateEntityConfigsBtn.disabled = false;
             generateEntityConfigsSpinner.classList.add('d-none');
         }
@@ -540,64 +477,60 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     async function generateScenario() {
-        // Validate inputs
         if (!validateScenario()) {
             return;
         }
         
-        const scenarioName = scenarioNameInput.value.trim();
-        const scenarioDescription = scenarioDescriptionTextarea.value.trim();
-        
-        // Show spinner and disable button
+        // Show loading state
         generateScenarioBtn.disabled = true;
-        if (generateScenarioSpinner) {
-            generateScenarioSpinner.classList.remove('d-none');
-        }
+        generateScenarioSpinner.classList.remove('d-none');
         
         try {
-            // Prepare the request payload
-            const payload = {
+            const scenarioName = scenarioNameInput.value.trim();
+            const scenarioDescription = scenarioDescriptionTextarea.value.trim();
+            const llmModel = scenarioLlmModelSelect.value;
+            
+            // Prepare the request data
+            const requestData = {
                 projectName: generatedProjectName,
                 scenarioName,
-                scenarioDescription
+                scenarioDescription,
+                llmModel
             };
             
-            // Call the API to generate the scenario
+            console.log('Sending scenario generation request:', requestData);
+            
+            // Send the request to the API
             const response = await fetch(`${PROJECT_GEN_API}/scenario`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(requestData)
             });
-            
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`API error: ${response.status} ${errorText}`);
-            }
             
             const data = await response.json();
             
-            if (data.success) {
-                // Scenario generated successfully
-                generatedScenarioPath = data.data.scenarioPath || '';
-                generatedScenarioFilename = data.data.scenarioFilename || '';
-                scenarioGenerated = true;
-                
-                showNotification('Scenario page generated successfully!', 'success');
-                goToStep(6);
-            } else {
-                throw new Error(data.error?.message || 'Unknown error');
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to generate scenario');
             }
+            
+            // Update the scenario path
+            generatedScenarioPath = data.data.scenarioPath;
+            generatedScenarioFilename = data.data.scenarioFilename;
+            scenarioGenerated = true;
+            
+            showNotification('Scenario generated successfully!', 'success');
+            
+            // Go to the next step
+            goToStep(6);
         } catch (error) {
             console.error('Error generating scenario:', error);
-            showNotification('Error generating scenario: ' + error.message, 'error');
+            showNotification(`Error: ${error.message}`, 'error');
         } finally {
-            // Hide spinner and enable button
+            // Reset loading state
             generateScenarioBtn.disabled = false;
-            if (generateScenarioSpinner) {
-                generateScenarioSpinner.classList.add('d-none');
-            }
+            generateScenarioSpinner.classList.add('d-none');
         }
     }
     
@@ -743,67 +676,64 @@ Product has fields: title, price, description, category.</pre>
      * Generate mock data for entities
      */
     async function generateMockData() {
+        // Make sure we have a project
         if (!projectGenerated || !generatedProjectName) {
-            showNotification('Please generate the project first', 'error');
+            showNotification('Please generate a project first', 'error');
             return;
         }
-
-        // Get input values
-        const useLLM = useLLMMockCheckbox.checked;
-        const recordsPerEntity = parseInt(recordsPerEntityInput.value, 10);
-
-        // Validate inputs
-        if (isNaN(recordsPerEntity) || recordsPerEntity < 1 || recordsPerEntity > 100) {
-            showNotification('Records per entity must be between 1 and 100', 'error');
-            return;
-        }
-
-        // Show loading spinner
+        
+        // Show loading state
         generateMockDataBtn.disabled = true;
         generateMockDataSpinner.classList.remove('d-none');
-        mockDataResult.style.display = 'none';
-
+        mockDataResult.classList.add('d-none');
+        
         try {
+            const recordsPerEntity = parseInt(recordsPerEntityInput.value) || 5;
+            const useLLM = useLLMMockCheckbox.checked;
+            const llmModel = mockDataLlmModelSelect.value;
+            
+            // Prepare the request data
+            const requestData = {
+                projectName: generatedProjectName,
+                recordsPerEntity,
+                useLLM,
+                llmModel
+            };
+            
+            console.log('Sending mock data generation request:', requestData);
+            
+            // Send the request to the API
             const response = await fetch(`${PROJECT_GEN_API}/mock-data`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    projectName: generatedProjectName,
-                    recordsPerEntity,
-                    useLLM
-                })
+                body: JSON.stringify(requestData)
             });
-
-            const result = await response.json();
-
-            if (result.success) {
-                // Show success message
-                mockDataGenerated = true;
-                mockDataMessage.textContent = result.data.message;
-                
-                // Create entity summary text
-                let entitySummary = '';
-                if (result.data.entities && result.data.entities.length > 0) {
-                    entitySummary = '<ul class="mt-2 mb-0">';
-                    result.data.entities.forEach(entity => {
-                        entitySummary += `<li><strong>${entity.name}:</strong> ${entity.count} records</li>`;
-                    });
-                    entitySummary += '</ul>';
-                    mockDataMessage.innerHTML = `${result.data.message} ${entitySummary}`;
-                }
-                
-                mockDataResult.style.display = 'block';
-                showNotification('Mock data generated successfully!', 'success');
-            } else {
-                showNotification(`Failed to generate mock data: ${result.error || 'Unknown error'}`, 'error');
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to generate mock data');
             }
+            
+            // Display the results
+            mockDataGenerated = true;
+            mockDataResult.classList.remove('d-none');
+            
+            // Build entity information
+            const entityInfo = data.data.entities.map(entity => 
+                `${entity.name}: ${entity.count} records`
+            ).join(', ');
+            
+            mockDataMessage.textContent = `Mock data generated for ${data.data.entities.length} entities (${entityInfo})`;
+            
+            showNotification('Mock data generated successfully!', 'success');
         } catch (error) {
             console.error('Error generating mock data:', error);
-            showNotification('Error generating mock data. Check console for details.', 'error');
+            showNotification(`Error: ${error.message}`, 'error');
         } finally {
-            // Hide loading spinner
+            // Reset loading state
             generateMockDataBtn.disabled = false;
             generateMockDataSpinner.classList.add('d-none');
         }

@@ -122,7 +122,21 @@ class GenAIService {
    * @param {Object} params - Code generation parameters
    * @returns {Promise<Object>} - Generated code
    */
-  async generateCode({ prompt, language, comments, maxTokens }) {
+  async generateCode({ prompt, language, comments, maxTokens, llmModel }) {
+    // Use the provided LLM model if specified
+    if (llmModel && llmModel !== this.model) {
+      // Create temporary service with the specified model
+      const tempService = new GenAIService(llmModel.includes('deepseek') ? 'deepseek' : 
+                                        llmModel.includes('ollama') ? 'ollama' : 
+                                        llmModel.includes('gemini') ? 'gemini' : 
+                                        llmModel.includes('anthropic') ? 'anthropic' : 'deepseek');
+      // Override the model name if necessary
+      if (llmModel !== tempService.model) {
+        tempService.model = llmModel;
+      }
+      return tempService.generateCode({ prompt, language, comments, maxTokens });
+    }
+    
     const systemPrompt = `You are an expert programmer. Generate ${language} code based on the following requirements. ${comments ? 'Include helpful comments.' : 'Minimize comments.'} The code should be production-ready, efficient, and follow best practices.`;
     
     const response = await this.generateCompletion({

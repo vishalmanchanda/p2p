@@ -72,6 +72,10 @@ if (!schemas.entityConfigs) {
     useLLM: require('joi').boolean().default(false)
       .messages({
         'boolean.base': 'useLLM must be a boolean'
+      }),
+    llmModel: require('joi').string().default('deepseek-r1:8b')
+      .messages({
+        'string.base': 'LLM Model must be a string'
       })
   });
 }
@@ -103,6 +107,10 @@ if (!schemas.scenarioGeneration) {
         'string.max': 'Scenario name must be at most 50 characters',
         'string.pattern.base': 'Scenario name can only contain letters, numbers, hyphens, underscores, and spaces',
         'any.required': 'Scenario name is required'
+      }),
+    llmModel: require('joi').string().default('deepseek-r1:8b')
+      .messages({
+        'string.base': 'LLM Model must be a string'
       })
   });
 }
@@ -129,6 +137,10 @@ if (!schemas.mockDataGeneration) {
     useLLM: require('joi').boolean().default(true)
       .messages({
         'boolean.base': 'useLLM must be a boolean'
+      }),
+    llmModel: require('joi').string().default('deepseek-r1:8b')
+      .messages({
+        'string.base': 'LLM Model must be a string'
       })
   });
 }
@@ -529,9 +541,9 @@ router.get('/download/:projectName', async (req, res, next) => {
  */
 router.post('/entity-configs', validate(schemas.entityConfigs), async (req, res, next) => {
   try {
-    const { requirementsText, port = 3002, host = 'localhost', useLLM = false } = req.body;
+    const { requirementsText, port = 3002, host = 'localhost', useLLM = false, llmModel = 'deepseek-r1:8b' } = req.body;
     
-    console.log(`Generating entity configurations for requirements`);
+    console.log(`Generating entity configurations for requirements using model: ${useLLM ? llmModel : 'rule-based'}`);
     
     // Use the entityConfigGenerator directly
     const entityConfigGenerator = require('../utils/entity-config-generator');
@@ -576,7 +588,8 @@ const configuredEntities = [{name: 'entityName', config: entityConfig}, ...];
 `,
               language: 'javascript',
               comments: false,
-              maxTokens: 4096
+              maxTokens: 4096,
+              llmModel: llmModel
             }),
             new Promise((_, reject) => 
               setTimeout(() => reject(new Error('AI service timeout')), 60000)
@@ -702,7 +715,7 @@ const configuredEntities = [{name: 'entityName', config: entityConfig}, ...];
  */
 router.post('/scenario', validate(schemas.scenarioGeneration), async (req, res, next) => {
   try {
-    const { projectName, scenarioDescription, scenarioName } = req.body;
+    const { projectName, scenarioDescription, scenarioName, llmModel = 'deepseek-r1:8b' } = req.body;
     
     // Check if project exists
     const projectPath = path.resolve(process.cwd(), projectName);
@@ -731,7 +744,7 @@ router.post('/scenario', validate(schemas.scenarioGeneration), async (req, res, 
     
     // Generate the scenario HTML
     const genAIService = require('../services/gen-ai.service');
-    console.log(`Generating scenario page for "${scenarioName}"`);
+    console.log(`Generating scenario page for "${scenarioName}" using model: ${llmModel}`);
     
     try {
       // Use AI service to generate scenario HTML
@@ -788,7 +801,8 @@ The final HTML file must be a complete standalone file with all necessary CSS an
           prompt,
           language: 'html',
           comments: true,
-          maxTokens: 8192
+          maxTokens: 8192,
+          llmModel: llmModel
         }),
         new Promise((_, reject) => 
           setTimeout(() => reject(new Error('AI service timeout')), 240000)
@@ -1015,7 +1029,7 @@ async function updateNavbar(projectPath, scenarioName, filename) {
  */
 router.post('/mock-data', validate(schemas.mockDataGeneration), async (req, res, next) => {
   try {
-    const { projectName, recordsPerEntity = 5, useLLM = true } = req.body;
+    const { projectName, recordsPerEntity = 5, useLLM = true, llmModel = 'deepseek-r1:8b' } = req.body;
     
     // Check if project exists
     const projectPath = path.resolve(process.cwd(), projectName);
@@ -1060,7 +1074,7 @@ router.post('/mock-data', validate(schemas.mockDataGeneration), async (req, res,
       
       if (useLLM) {
         // Use LLM for mock data generation
-        console.log(`Using LLM to generate ${recordsPerEntity} records per entity`);
+        console.log(`Using LLM (${llmModel}) to generate ${recordsPerEntity} records per entity`);
         const genAIService = require('../services/gen-ai.service');
         
         // Prepare mockData object structure
@@ -1091,7 +1105,8 @@ Return the data as a valid JSON array without any explanation.`;
                 prompt,
                 language: 'json',
                 comments: false,
-                maxTokens: 4096
+                maxTokens: 4096,
+                llmModel: llmModel
               }),
               new Promise((_, reject) => 
                 setTimeout(() => reject(new Error('AI service timeout')), 60000)

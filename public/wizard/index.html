@@ -640,6 +640,39 @@
                         Create Scenarios <i class="bi bi-arrow-right ms-1"></i>
                     </button>
                 </div>
+                
+                <!-- Mock Data Generation Section -->
+                <div class="card mt-4">
+                    <div class="card-header d-flex align-items-center">
+                        <i class="bi bi-database-fill me-2"></i> Generate Mock Data
+                    </div>
+                    <div class="card-body">
+                        <p>Generate realistic mock data for your entities:</p>
+                        
+                        <div class="mb-3 form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="use-llm-mock" checked>
+                            <label class="form-check-label" for="use-llm-mock">Use AI for more realistic data</label>
+                            <div class="form-text">When enabled, AI will generate contextually appropriate mock data for your entities.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="records-per-entity" class="form-label">Records per entity:</label>
+                            <input type="number" class="form-control" id="records-per-entity" value="5" min="1" max="100">
+                            <div class="form-text">How many records to generate for each entity (max 100).</div>
+                        </div>
+                        
+                        <button id="generate-mock-data-btn" class="btn btn-primary w-100">
+                            <i class="bi bi-database-fill-gear me-1"></i> Generate Mock Data
+                            <span id="generate-mock-data-spinner" class="d-none">
+                                <span class="loader"></span>
+                            </span>
+                        </button>
+                        
+                        <div id="mock-data-result" class="alert alert-success mt-3" style="display: none;">
+                            <i class="bi bi-check-circle-fill me-2"></i> <span id="mock-data-message"></span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Step 5: Generate Scenario -->

@@ -107,6 +107,32 @@ if (!schemas.scenarioGeneration) {
   });
 }
 
+// Define validation schema for mock data generation
+if (!schemas.mockDataGeneration) {
+  schemas.mockDataGeneration = require('joi').object({
+    projectName: require('joi').string().required().min(1).max(50)
+      .pattern(/^[a-zA-Z0-9-_]+$/)
+      .messages({
+        'string.empty': 'Project name is required',
+        'string.min': 'Project name must be at least 1 character',
+        'string.max': 'Project name must be at most 50 characters',
+        'string.pattern.base': 'Project name can only contain letters, numbers, hyphens, and underscores',
+        'any.required': 'Project name is required'
+      }),
+    recordsPerEntity: require('joi').number().integer().min(1).max(100).default(5)
+      .messages({
+        'number.base': 'Records per entity must be a number',
+        'number.integer': 'Records per entity must be an integer',
+        'number.min': 'Records per entity must be at least 1',
+        'number.max': 'Records per entity must be at most 100'
+      }),
+    useLLM: require('joi').boolean().default(true)
+      .messages({
+        'boolean.base': 'useLLM must be a boolean'
+      })
+  });
+}
+
 /**
  * @swagger
  * /generate/project:
@@ -920,6 +946,242 @@ async function updateNavbar(projectPath, scenarioName, filename) {
     // We'll continue even if navbar update fails
   }
 }
+
+/**
+ * @swagger
+ * /generate/project/mock-data:
+ *   post:
+ *     summary: Generate mock data for entities in a project
+ *     description: Creates realistic mock data for all entities defined in the project using LLM or Faker
+ *     tags: [Project Generation]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - projectName
+ *             properties:
+ *               projectName:
+ *                 type: string
+ *                 description: Name of the existing project
+ *                 example: e-commerce-api
+ *               recordsPerEntity:
+ *                 type: integer
+ *                 description: Number of records to generate per entity
+ *                 default: 5
+ *                 example: 5
+ *               useLLM:
+ *                 type: boolean
+ *                 description: Whether to use LLM for data generation (true) or use Faker.js (false)
+ *                 default: true
+ *                 example: true
+ *     responses:
+ *       200:
+ *         description: Successfully generated mock data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "Mock data generated successfully"
+ *                     dbFilePath:
+ *                       type: string
+ *                       example: "/path/to/db.json"
+ *                     entities:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           name:
+ *                             type: string
+ *                             example: "users"
+ *                           count:
+ *                             type: integer
+ *                             example: 5
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.post('/mock-data', validate(schemas.mockDataGeneration), async (req, res, next) => {
+  try {
+    const { projectName, recordsPerEntity = 5, useLLM = true } = req.body;
+    
+    // Check if project exists
+    const projectPath = path.resolve(process.cwd(), projectName);
+    try {
+      await fs.access(projectPath);
+    } catch (error) {
+      return next(new ApiError(`Project "${projectName}" not found`, 404, 'PROJECT_NOT_FOUND'));
+    }
+    
+    // Load entity configurations from file
+    const entityConfigsPath = path.join(projectPath, 'static', 'entity-configs.js');
+    let entityConfigsContent;
+    try {
+      entityConfigsContent = await fs.readFile(entityConfigsPath, 'utf-8');
+    } catch (error) {
+      return next(new ApiError(`Entity configurations not found for project "${projectName}"`, 404, 'ENTITY_CONFIGS_NOT_FOUND'));
+    }
+    
+    // Create temporary file to require the entity configurations
+    const tempDir = path.join(process.cwd(), 'temp');
+    try {
+      await fs.mkdir(tempDir, { recursive: true });
+    } catch (error) {
+      // Ignore if directory exists
+    }
+    
+    const tempFilePath = path.join(tempDir, `_temp_config_${Date.now()}.js`);
+    try {
+      // Add module.exports to the entity configurations
+      await fs.writeFile(tempFilePath, entityConfigsContent + '\nmodule.exports = { configuredEntities };');
+       
+       // Load the configurations
+       const entityConfigs = require(tempFilePath).configuredEntities;
+      
+      // Set up generator options
+      const options = {
+        recordsPerEntity,
+        outputFile: path.join(projectPath, 'db', 'db.json')
+      };
+      
+      let mockData;
+      
+      if (useLLM) {
+        // Use LLM for mock data generation
+        console.log(`Using LLM to generate ${recordsPerEntity} records per entity`);
+        const genAIService = require('../services/gen-ai.service');
+        
+        // Prepare mockData object structure
+        mockData = {};
+        
+        // Process each entity
+        for (const entity of entityConfigs) {
+          const entityName = entity.config.entityName;
+          console.log(`Generating mock data for ${entityName} using LLM...`);
+          
+          // Build a prompt for each entity
+          const attributesDescription = entity.config.attributes
+            .map(attr => `- ${attr.name} (${attr.type}${attr.required ? ', required' : ''}): ${attr.label}`)
+            .join('\n');
+          
+          const prompt = `Generate ${recordsPerEntity} realistic mock data records for a "${entity.name}" entity with the following attributes:
+
+${attributesDescription}
+
+Each record should have an "id" field (integer starting from 1) and values for all the attributes.
+The data should be realistic and appropriate for each field type.
+Return the data as a valid JSON array without any explanation.`;
+          
+          try {
+            // Call LLM to generate data
+            const response = await Promise.race([
+              genAIService.generateCode({
+                prompt,
+                language: 'json',
+                comments: false,
+                maxTokens: 4096
+              }),
+              new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('AI service timeout')), 60000)
+              )
+            ]);
+            
+            let generatedData;
+            
+            // Extract the data from the response
+            if (response && (response.text || response.code || response.content)) {
+              generatedData = response.text || response.code || response.content;
+            } else if (typeof response === 'string') {
+              generatedData = response;
+            } else {
+              throw new Error(`Unable to extract valid JSON from AI response for ${entityName}`);
+            }
+            
+            // Clean up the response to extract just the JSON array
+            generatedData = generatedData.trim();
+            if (generatedData.startsWith('```json')) {
+              generatedData = generatedData.substring(7);
+            }
+            if (generatedData.startsWith('```')) {
+              generatedData = generatedData.substring(3);
+            }
+            if (generatedData.endsWith('```')) {
+              generatedData = generatedData.substring(0, generatedData.length - 3);
+            }
+            
+            // Parse the JSON data
+            const entityData = JSON.parse(generatedData);
+            
+            // Store in mockData object
+            mockData[entityName] = entityData;
+            
+            console.log(`Generated ${entityData.length} records for ${entityName}`);
+          } catch (error) {
+            console.error(`Error generating mock data for ${entityName}:`, error);
+            // Create empty array if generation fails
+            mockData[entityName] = [];
+          }
+        }
+      } else {
+        // Use the built-in mock data generator (Faker.js)
+        console.log(`Using Faker.js to generate ${recordsPerEntity} records per entity`);
+        
+        // Import the mock data generator from templates
+        const mockDataGeneratorModule = require(path.join(__dirname, '..', 'templates', 'mock', 'mock-data-generator.js'));
+        
+        // Generate the mock data
+        const generator = new mockDataGeneratorModule.MockDataGenerator(entityConfigs, options);
+        mockData = await generator.generateMockData();
+      }
+      
+      // Write the mock data to db.json
+      const dbFilePath = path.join(projectPath, 'db', 'db.json');
+      await fs.writeFile(dbFilePath, JSON.stringify(mockData, null, 2));
+      
+      // Prepare the response with entity counts
+      const entities = Object.keys(mockData).map(entityName => ({
+        name: entityName,
+        count: mockData[entityName].length
+      }));
+      
+      res.status(200).json({
+        success: true,
+        data: {
+          message: `Mock data generated successfully using ${useLLM ? 'LLM' : 'Faker.js'}`,
+          dbFilePath,
+          entities
+        }
+      });
+    } catch (error) {
+      console.error('Error generating mock data:', error);
+      return next(new ApiError(`Failed to generate mock data: ${error.message}`, 500, 'MOCK_DATA_GENERATION_ERROR'));
+    } finally {
+      // Clean up temporary file
+      try {
+        if (fsSync.existsSync(tempFilePath)) {
+          fsSync.unlinkSync(tempFilePath);
+        }
+      } catch (cleanupError) {
+        console.error('Error cleaning up temporary file:', cleanupError);
+      }
+    }
+  } catch (error) {
+    console.error('Error in mock data generation endpoint:', error);
+    next(new ApiError(`Failed to process request: ${error.message}`, 500, 'REQUEST_PROCESSING_ERROR'));
+  }
+});
 
 router.get('/test', (req, res) => {
   res.status(200).json({

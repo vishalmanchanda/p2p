@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let scenarioGenerated = false;
     let generatedScenarioPath = '';
     let generatedScenarioFilename = '';
+    let mockDataGenerated = false;
     
     // DOM Elements
     const steps = document.querySelectorAll('.step');
@@ -52,6 +53,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const prevStep4Btn = document.getElementById('prev-step4');
     const downloadZipBtn = document.getElementById('download-zip-btn');
     const nextStep4Btn = document.getElementById('next-step4');
+    const useLLMMockCheckbox = document.getElementById('use-llm-mock');
+    const recordsPerEntityInput = document.getElementById('records-per-entity');
+    const generateMockDataBtn = document.getElementById('generate-mock-data-btn');
+    const generateMockDataSpinner = document.getElementById('generate-mock-data-spinner');
+    const mockDataResult = document.getElementById('mock-data-result');
+    const mockDataMessage = document.getElementById('mock-data-message');
     
     // Step 5 Elements
     const scenarioNameInput = document.getElementById('scenario-name');
@@ -92,6 +99,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     prevStep4Btn.addEventListener('click', () => goToStep(3));
     downloadZipBtn.addEventListener('click', downloadProjectZip);
+    generateMockDataBtn.addEventListener('click', generateMockData);
     nextStep4Btn.addEventListener('click', () => {
         if (projectGenerated) {
             // Update the entities display in the scenario step
@@ -636,6 +644,7 @@ document.addEventListener('DOMContentLoaded', function() {
         scenarioGenerated = false;
         generatedScenarioPath = '';
         generatedScenarioFilename = '';
+        mockDataGenerated = false;
         
         // Reset form fields
         projectNameInput.value = '';
@@ -645,6 +654,9 @@ document.addEventListener('DOMContentLoaded', function() {
         projectGenStatus.textContent = 'Ready to generate project...';
         scenarioNameInput.value = '';
         scenarioDescriptionTextarea.value = '';
+        recordsPerEntityInput.value = '5';
+        useLLMMockCheckbox.checked = true;
+        mockDataResult.style.display = 'none';
         
         // Reset buttons
         nextStep2Btn.disabled = true;
@@ -725,5 +737,75 @@ Product has fields: title, price, description, category.</pre>
         window.notificationTimeout = setTimeout(() => {
             notification.classList.remove('show');
         }, 5000);
+    }
+
+    /**
+     * Generate mock data for entities
+     */
+    async function generateMockData() {
+        if (!projectGenerated || !generatedProjectName) {
+            showNotification('Please generate the project first', 'error');
+            return;
+        }
+
+        // Get input values
+        const useLLM = useLLMMockCheckbox.checked;
+        const recordsPerEntity = parseInt(recordsPerEntityInput.value, 10);
+
+        // Validate inputs
+        if (isNaN(recordsPerEntity) || recordsPerEntity < 1 || recordsPerEntity > 100) {
+            showNotification('Records per entity must be between 1 and 100', 'error');
+            return;
+        }
+
+        // Show loading spinner
+        generateMockDataBtn.disabled = true;
+        generateMockDataSpinner.classList.remove('d-none');
+        mockDataResult.style.display = 'none';
+
+        try {
+            const response = await fetch(`${PROJECT_GEN_API}/mock-data`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    projectName: generatedProjectName,
+                    recordsPerEntity,
+                    useLLM
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Show success message
+                mockDataGenerated = true;
+                mockDataMessage.textContent = result.data.message;
+                
+                // Create entity summary text
+                let entitySummary = '';
+                if (result.data.entities && result.data.entities.length > 0) {
+                    entitySummary = '<ul class="mt-2 mb-0">';
+                    result.data.entities.forEach(entity => {
+                        entitySummary += `<li><strong>${entity.name}:</strong> ${entity.count} records</li>`;
+                    });
+                    entitySummary += '</ul>';
+                    mockDataMessage.innerHTML = `${result.data.message} ${entitySummary}`;
+                }
+                
+                mockDataResult.style.display = 'block';
+                showNotification('Mock data generated successfully!', 'success');
+            } else {
+                showNotification(`Failed to generate mock data: ${result.error || 'Unknown error'}`, 'error');
+            }
+        } catch (error) {
+            console.error('Error generating mock data:', error);
+            showNotification('Error generating mock data. Check console for details.', 'error');
+        } finally {
+            // Hide loading spinner
+            generateMockDataBtn.disabled = false;
+            generateMockDataSpinner.classList.add('d-none');
+        }
     }
 }); 

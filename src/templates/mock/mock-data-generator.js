@@ -106,7 +106,7 @@ class MockDataGenerator {
         return this.generateSelectValue(attr);
         
       case 'checkbox':
-        return this.faker.datatype.boolean();
+        return this.faker.datatype?.boolean() || this.faker.boolean?.boolean() || Math.random() > 0.5;
         
       case 'textarea':
         return this.faker.lorem.paragraphs(2);
@@ -122,22 +122,22 @@ class MockDataGenerator {
     
     if (name.includes('name')) {
       if (name.includes('first')) {
-        return this.faker.name.firstName();
+        return this.faker.person?.firstName() || this.faker.name?.firstName();
       } else if (name.includes('last')) {
-        return this.faker.name.lastName();
+        return this.faker.person?.lastName() || this.faker.name?.lastName();
       } else if (name.includes('product')) {
         return this.faker.commerce.productName();
       } else if (name.includes('company')) {
         return this.faker.company.name();
       } else {
-        return this.faker.name.fullName();
+        return this.faker.person?.fullName() || this.faker.name?.fullName();
       }
     } else if (name.includes('address')) {
-      return this.faker.address.streetAddress();
+      return this.faker.location?.streetAddress() || this.faker.address?.streetAddress();
     } else if (name.includes('city')) {
-      return this.faker.address.city();
+      return this.faker.location?.city() || this.faker.address?.city();
     } else if (name.includes('country')) {
-      return this.faker.address.country();
+      return this.faker.location?.country() || this.faker.address?.country();
     } else if (name.includes('phone')) {
       return this.faker.phone.number();
     } else if (name.includes('color')) {
@@ -147,7 +147,8 @@ class MockDataGenerator {
     } else if (name.includes('description')) {
       return this.faker.lorem.paragraph();
     } else if (name.includes('id') || name.includes('code')) {
-      return this.faker.random.alphaNumeric(8).toUpperCase();
+      return this.faker.string?.alphanumeric(8, {casing: 'upper'}) || 
+             this.faker.random?.alphaNumeric(8).toUpperCase();
     } else {
       return this.faker.lorem.words(3);
     }
@@ -161,18 +162,27 @@ class MockDataGenerator {
     const name = attr.name.toLowerCase();
     
     if (name.includes('age')) {
-      return this.faker.datatype.number({ min: 18, max: 80 });
+      return this.faker.number?.int({ min: 18, max: 80 }) || 
+             this.faker.datatype?.number({ min: 18, max: 80 });
     } else if (name.includes('price') || name.includes('amount') || name.includes('cost')) {
       // Generate price with 2 decimal places
       return parseFloat(this.faker.commerce.price(min, max));
     } else if (name.includes('quantity') || name.includes('count') || name.includes('stock')) {
-      return this.faker.datatype.number({ min, max: Math.min(max, 100) });
+      return this.faker.number?.int({ min, max: Math.min(max, 100) }) || 
+             this.faker.datatype?.number({ min, max: Math.min(max, 100) });
     } else if (name.includes('rating')) {
-      return this.faker.datatype.number({ min: 1, max: 5, precision: 0.1 });
+      const precision = 0.1;
+      const value = this.faker.number?.float({ min: 1, max: 5, precision }) || 
+                    (Math.round((Math.random() * (5 - 1) + 1) / precision) * precision);
+      return value;
     } else if (name.includes('percent') || name.includes('discount')) {
-      return this.faker.datatype.number({ min: 0, max: 100, precision: 0.01 });
+      const precision = 0.01;
+      const value = this.faker.number?.float({ min: 0, max: 100, precision }) || 
+                    (Math.round((Math.random() * 100) / precision) * precision);
+      return value;
     } else {
-      return this.faker.datatype.number({ min, max });
+      return this.faker.number?.int({ min, max }) || 
+             this.faker.datatype?.number({ min, max });
     }
   }
   
@@ -185,16 +195,16 @@ class MockDataGenerator {
       return this.faker.date.birthdate({ min: 18, max: 80, mode: 'age' }).toISOString().split('T')[0];
     } else if (name.includes('future') || name.includes('due')) {
       // Future date within next year
-      return this.faker.date.future(1).toISOString().split('T')[0];
+      return this.faker.date.future({ years: 1 }).toISOString().split('T')[0];
     } else if (name.includes('past') || name.includes('created')) {
       // Past date within last year
-      return this.faker.date.past(1).toISOString().split('T')[0];
+      return this.faker.date.past({ years: 1 }).toISOString().split('T')[0];
     } else if (name.includes('hire') || name.includes('start')) {
       // Hire date within last 5 years
-      return this.faker.date.past(5).toISOString().split('T')[0];
+      return this.faker.date.past({ years: 5 }).toISOString().split('T')[0];
     } else {
       // Default to recent date
-      return this.faker.date.recent(30).toISOString().split('T')[0];
+      return this.faker.date.recent({ days: 30 }).toISOString().split('T')[0];
     }
   }
   
@@ -250,12 +260,8 @@ async function generateMockData(entityConfigs, options = {}) {
   return generator.generate();
 }
 
-// If in browser environment, make the function available globally
-if (typeof window !== 'undefined') {
-  window.generateMockData = generateMockData;
-}
-
-// If in Node.js environment, export the function
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { generateMockData, MockDataGenerator };
-} 
+// Export both the class and the helper function
+module.exports = {
+  MockDataGenerator,
+  generateMockData
+}; 

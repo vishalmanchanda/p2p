@@ -8,7 +8,7 @@ const { validate, schemas } = require('../middleware/validator');
  * /validate/content:
  *   post:
  *     summary: Validate and review content
- *     description: Uses the DeepSeek model to validate and review content based on specified criteria
+ *     description: Uses the  model to validate and review content based on specified criteria
  *     tags: [Content Validation]
  *     requestBody:
  *       required: true

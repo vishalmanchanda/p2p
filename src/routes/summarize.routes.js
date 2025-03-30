@@ -8,7 +8,7 @@ const { validate, schemas } = require('../middleware/validator');
  * /summarize:
  *   post:
  *     summary: Summarize content
- *     description: Uses the DeepSeek model to summarize content with customizable length and style
+ *     description: Uses the  model to summarize content with customizable length and style
  *     tags: [Content Summarization]
  *     requestBody:
  *       required: true

@@ -2,7 +2,7 @@ const axios = require('axios');
 const { ApiError } = require('../middleware/errorHandler');
 
 /**
- * Service for interacting with the local DeepSeek model
+ * Service for interacting with the local  model
  */
 class GenAIService {
   constructor( llmName = 'deepseek') {
@@ -22,9 +22,9 @@ class GenAIService {
     this.client.interceptors.response.use(
       response => response,
       error => {
-        console.error('DeepSeek API Error:', error.response?.data || error.message);
+        console.error(' API Error:', error.response?.data || error.message);
         const statusCode = error.response?.status || 500;
-        const message = error.response?.data?.error || error.message || 'DeepSeek API error';
+        const message = error.response?.data?.error || error.message || ' API error';
         const code = 'DEEPSEEK_API_ERROR';
         
         throw new ApiError(message, statusCode, code);
@@ -39,7 +39,7 @@ class GenAIService {
       this.model = process.env.DEEPSEEK_MODEL || 'deepseek-r1:8b';
       
       // Debug log
-      console.log('DeepSeek API URL:', this.apiUrl);
+      console.log(' API URL:', this.apiUrl);
       
       // Ensure the URL is properly formatted
       if (this.apiUrl && !this.apiUrl.endsWith('/')) {
@@ -63,7 +63,7 @@ class GenAIService {
   }
 
   /**
-   * Generate a completion from the local DeepSeek model
+   * Generate a completion from the local  model
    * @param {Object} params - Parameters for the completion
    * @returns {Promise<Object>} - The completion response
    */

@@ -8,7 +8,7 @@ const { validate, schemas } = require('../middleware/validator');
  * /generate/svg:
  *   post:
  *     summary: Generate SVG based on description
- *     description: Uses the DeepSeek model to generate SVG code based on a description with customizable style, size, and colors
+ *     description: Uses the  model to generate SVG code based on a description with customizable style, size, and colors
  *     tags: [SVG Generation]
  *     requestBody:
  *       required: true

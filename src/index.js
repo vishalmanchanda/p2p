@@ -81,7 +81,7 @@ app.use('/api', apiLimiter);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs, {
   explorer: true,
   customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: 'DeepSeek Express API Documentation',
+  customSiteTitle: ' Express API Documentation',
 }));
 
 // Routes
@@ -132,13 +132,13 @@ app.use(errorHandler);
 // Start the server after checking if the model is running
 async function startServer() {
   try {
-    // Check if the local DeepSeek model is running
+    // Check if the local  model is running
     await checkModelOrExit();
     
     // Start the server
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
-      console.log(`Using DeepSeek model: ${process.env.DEEPSEEK_MODEL}`);
+      console.log(`Using  model: ${process.env.DEEPSEEK_MODEL}`);
       console.log(`API Documentation: http://localhost:${PORT}/api-docs`);
     });
   } catch (error) {

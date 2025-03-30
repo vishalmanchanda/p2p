@@ -1,7 +1,7 @@
 const axios = require('axios');
 
 /**
- * Check if the local DeepSeek model is running
+ * Check if the local  model is running
  * @returns {Promise<{isRunning: boolean, availableModels: string[]}>} - Status and available models
  */
 async function isModelRunning() {
@@ -29,7 +29,7 @@ async function isModelRunning() {
       availableModels: modelNames
     };
   } catch (error) {
-    let errorMessage = 'Error connecting to local DeepSeek model: ';
+    let errorMessage = 'Error connecting to local  model: ';
     
     if (error.code === 'ECONNREFUSED') {
       errorMessage += `Connection refused to ${process.env.DEEPSEEK_API_URL}`;
@@ -51,12 +51,12 @@ async function isModelRunning() {
  * Check if the model is running and exit if not
  */
 async function checkModelOrExit() {
-  console.log('Checking if local DeepSeek model is running...');
+  console.log('Checking if local  model is running...');
   
   const { isRunning, availableModels } = await isModelRunning();
   
   if (!isRunning) {
-    console.error('\n❌ Error: Local DeepSeek model is not running.');
+    console.error('\n❌ Error: Local  model is not running.');
     console.error('\nTroubleshooting steps:');
     console.error('1. Make sure Ollama is running with: ollama serve');
     console.error('2. Check if you can access the Ollama UI at: http://localhost:11434/');
@@ -83,7 +83,7 @@ async function checkModelOrExit() {
     }
   }
   
-  console.log(`✅ Local DeepSeek model '${process.env.DEEPSEEK_MODEL}' is running.`);
+  console.log(`✅ Local  model '${process.env.DEEPSEEK_MODEL}' is running.`);
 }
 
 module.exports = {

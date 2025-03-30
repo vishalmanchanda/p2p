@@ -1,7 +1,7 @@
 {
     "name": "deepseek-express-api",
     "version": "1.0.0",
-    "description": "Express API for DeepSeek model integration",
+    "description": "Express API for  model integration",
     "main": "src/index.js",
     "scripts": {
         "start": "node src/index.js",

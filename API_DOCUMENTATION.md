@@ -1,10 +1,10 @@
-# DeepSeek Express API Documentation
+#  Express API Documentation
 
-This document provides detailed information about the DeepSeek Express API endpoints, request formats, and response structures.
+This document provides detailed information about the  Express API endpoints, request formats, and response structures.
 
-## Local DeepSeek Model
+## Local  Model
 
-This API is configured to work with a locally running DeepSeek model (deepseek-r1:8b) using Ollama at http://127.0.0.1:11434/. Make sure the model is running before using the API.
+This API is configured to work with a locally running  model (deepseek-r1:8b) using Ollama at http://127.0.0.1:11434/. Make sure the model is running before using the API.
 
 ### Troubleshooting Connection Issues
 
@@ -22,7 +22,7 @@ http://localhost:3000/api
 
 ## Authentication
 
-No authentication is required for the API requests. The API communicates with the local DeepSeek model directly.
+No authentication is required for the API requests. The API communicates with the local  model directly.
 
 ## Common Response Format
 

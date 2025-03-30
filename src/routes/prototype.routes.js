@@ -10,7 +10,7 @@ const { validate, schemas } = require('../middleware/validator');
  * /generate/prototype:
  *   post:
  *     summary: Generate HTML prototype based on a scenario
- *     description: Uses the DeepSeek model to generate a professional HTML prototype with Tailwind CSS, jQuery, and Font Awesome based on the provided scenario description. The generated prototype is saved to the public directory.
+ *     description: Uses the  model to generate a professional HTML prototype with Tailwind CSS, jQuery, and Font Awesome based on the provided scenario description. The generated prototype is saved to the public directory.
  *     tags: [Prototype Generation]
  *     requestBody:
  *       required: true

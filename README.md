@@ -1,216 +1,186 @@
-# DeepSeek Express API
+#  Express API
 
-This is an Express.js API that integrates with the DeepSeek AI model to provide various AI capabilities:
+A comprehensive Express.js API that interfaces with the local  AI model to provide various AI-powered endpoints for code generation, content validation, research assistance, and more.
 
-- Code generation
-- Content validation and review
-- Topic research
-- Content summarization
-- Insight derivation
-- SVG generation
+![API Documentation](https://img.shields.io/badge/API-Documentation-blue.svg)
+![Node.js](https://img.shields.io/badge/Node.js-v18+-green.svg)
+![Express](https://img.shields.io/badge/Express-v4.18.2-blue.svg)
+![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-## Local DeepSeek Model Setup
+## 📋 Table of Contents
 
-This API is configured to work with a locally running DeepSeek model using Ollama. Make sure you have the DeepSeek model running locally before starting the API.
+- [Overview](#overview)
+- [Features](#features)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Usage](#usage)
+- [API Endpoints](#api-endpoints)
+- [Development](#development)
+- [Testing](#testing)
+- [Troubleshooting](#troubleshooting)
 
-### Prerequisites
+## 🔍 Overview
 
-1. Install [Ollama](https://ollama.ai/)
-2. Pull the DeepSeek model:
+ Express API is a powerful Node.js/Express server that acts as a middleware between your applications and a locally running  language model. It provides a set of RESTful endpoints for AI-powered operations like generating code, validating content, researching topics, and creating prototypes.
+
+The API is designed to work with a local  model running via Ollama, making it efficient for development environments and removing the need for external API dependencies.
+
+## ✨ Features
+
+- **AI-Powered Code Generation**: Generate code in various programming languages based on your specifications
+- **Content Validation**: Review and validate content based on custom criteria
+- **Research Assistance**: Get AI-generated research on any topic
+- **Content Summarization**: Automatically summarize long-form content
+- **Insight Extraction**: Extract key insights from data or text
+- **SVG Generation**: Create SVG graphics based on text descriptions
+- **Prototype Generation**: Generate UI/UX prototypes from requirements
+- **JDL Generation**: Create JHipster Domain Language files
+- **Project Generation**: Scaffold entire projects based on requirements
+- **Swagger Documentation**: Comprehensive API documentation
+- **Rate Limiting**: Protection against abuse
+- **Error Handling**: Robust error handling system
+
+## 📋 Prerequisites
+
+- [Node.js](https://nodejs.org/) (v18 or higher)
+- [npm](https://www.npmjs.com/) (v8 or higher)
+- [Ollama](https://ollama.ai/) (for running the local  model)
+
+## 🚀 Installation
+
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd deepseek-express-api
    ```
-   ollama pull deepseek-r1:8b
-   ```
-3. Run the model:
-   ```
-   ollama serve
-   ```
 
-The model should be accessible at `http://localhost:11434/`.
-
-## API Setup
-
-1. Clone this repository
 2. Install dependencies:
-   ```
+   ```bash
    npm install
    ```
-3. The `.env` file is already configured to connect to the local DeepSeek model:
+
+3. Install the  model using Ollama:
+   ```bash
+   ollama pull deepseek-r1:8b
    ```
-   PORT=3000
-   NODE_ENV=development
-   DEEPSEEK_API_KEY=
-   DEEPSEEK_API_URL=http://127.0.0.1:11434
-   DEEPSEEK_MODEL=deepseek-r1:8b
+
+4. Create a `.env` file based on the provided example:
+   ```bash
+   cp .env.example .env
    ```
-4. If your local model is running on a different port or has a different name, update the `.env` file accordingly.
 
-## Troubleshooting
-
-### Connection Refused Error
-
-If you encounter a "Connection Refused" error when trying to connect to the local model, try the following:
-
-1. Make sure Ollama is running:
-   ```
+5. Start the Ollama server:
+   ```bash
    ollama serve
    ```
 
-2. Check if the model is available:
-   ```
-   ollama list
-   ```
-
-3. If you still have issues, try using the explicit IPv4 address (127.0.0.1) instead of localhost in the `.env` file:
-   ```
-   DEEPSEEK_API_URL=http://127.0.0.1:11434
+6. Start the Express API:
+   ```bash
+   npm run dev
    ```
 
-4. You can test the connection with:
-   ```
-   npm run test:local-model
-   ```
+## ⚙️ Configuration
 
-## Running the Application
+The API can be configured via environment variables in the `.env` file:
 
-Development mode:
-```
-npm run dev
-```
+| Variable | Description | Default |
+|----------|-------------|---------|
+| PORT | Port on which the server runs | 3000 |
+| NODE_ENV | Environment (development/production) | development |
+| DEEPSEEK_API_URL | URL of the Ollama API | http://127.0.0.1:11434 |
+| DEEPSEEK_MODEL | Name of the  model | deepseek-r1:8b |
 
-Production mode:
-```
-npm start
-```
+Additional configuration for alternative models (Gemini, Claude) is also available.
 
-## API Documentation
+## 📖 Usage
 
-The API is documented using Swagger UI. You can access the interactive documentation at:
+Once the server is running, you can access:
 
-```
-http://localhost:3000/api-docs
-```
+- The API at `http://localhost:3000/api`
+- API documentation at `http://localhost:3000/api-docs`
+- Wizard UI at `http://localhost:3000/wizard`
 
-### Available API Endpoints
+### Example: Generate Code
 
-- `POST /api/generate/code` - Generate code based on requirements
-- `POST /api/validate/content` - Validate content against specified criteria
-- `POST /api/research/topic` - Research a topic and provide information
-- `POST /api/summarize` - Summarize content
-- `POST /api/derive/insights` - Derive insights from provided content
-- `POST /api/generate/svg` - Generate SVG based on requirements
-- `POST /api/generate/prototype` - Generate a prototype based on requirements
-- `POST /api/generate/prototype-builder` - Generate a prototype using the section-based builder
-- `POST /api/generate/jdl` - Generate JHipster Domain Language (JDL) from requirements
-- `POST /api/generate/jdl-to-json` - Convert JDL to JSON Server db.json format with mock data
-- `POST /api/generate/prototype-json-server` - Generate a complete prototype with JSON Server integration
-
-### JDL to JSON Server Conversion
-
-The API provides endpoints to convert JHipster Domain Language (JDL) to JSON Server format with mock data:
-
-- `POST /api/generate/jdl-to-json` - Convert JDL content to JSON Server db.json
-- `POST /api/generate/jdl-to-json/from-jdl-file/{jdlName}` - Convert an existing JDL file to JSON Server db.json
-- `POST /api/generate/jdl-to-json/from-requirements` - Generate JDL from requirements and convert to JSON Server db.json in one step
-- `GET /api/generate/jdl-to-json/{name}` - Get a previously generated JSON Server db.json file
-
-The generated JSON Server files can be used with [JSON Server](https://github.com/typicode/json-server) to create a mock API for your application.
-
-### Prototype with JSON Server Integration
-
-The API provides endpoints to generate complete prototypes with JSON Server integration:
-
-- `POST /api/generate/prototype-json-server` - Generate a prototype with JSON Server integration from JDL content
-- `POST /api/generate/prototype-json-server/from-jdl-file/{jdlName}` - Generate a prototype with JSON Server integration from an existing JDL file
-- `POST /api/generate/prototype-json-server/from-requirements` - Generate a prototype with JSON Server integration from requirements
-- `POST /api/generate/prototype-json-server/start/{name}` - Start JSON Server for a previously generated prototype
-- `GET /api/generate/prototype-json-server/{name}` - Get information about a previously generated prototype
-
-The generated prototypes include:
-- A complete HTML/CSS/JS frontend in the `static` directory
-- A `db.json` file with mock data for JSON Server
-- A `data.jdl` file with the JDL entity definitions
-- A `start-server.sh` script to easily start the JSON Server
-
-To run the prototype:
-1. Navigate to the prototype directory: `cd public/your-prototype-name`
-2. Run the start script: `./start-server.sh`
-3. Or manually start JSON Server: `npx json-server db.json -p 3001 -s static`
-4. Open your browser to `http://localhost:3001`
-
-## API Endpoints
-
-### Code Generation
-- `POST /api/generate/code`
-  - Generates clean, production-ready code based on the provided prompt
-  - Returns only the actual code without explanatory text or `<think>` tags
-
-### HTML Prototype Generation
-- `POST /api/generate/prototype`
-  - Generates a professional-looking HTML prototype based on a scenario description
-  - Uses HTML5, jQuery, Tailwind CSS, and Font Awesome
-  - Saves the generated prototype to the public directory
-  - Returns a URL to access the prototype
-
-### Section-Based HTML Prototype Generation
-- `POST /api/generate/prototype-builder`
-  - Builds a complete HTML prototype by generating and assembling multiple sections
-  - Each section is created individually using the LLM and then combined
-  - Provides more control over the structure and content of the prototype
-- `POST /api/generate/prototype-builder/section`
-  - Generates a single section for an HTML prototype
-  - Allows for iterative development of prototypes section by section
-- `GET /api/generate/prototype-builder/{name}/sections`
-  - Lists all generated sections for a specific prototype
-
-### JHipster Domain Language (JDL) Generation
-- `POST /api/generate/jdl`
-  - Generates JDL entity definitions and relationships from natural language requirements
-  - Creates entity models with appropriate fields, types, and validations
-  - Defines relationships between entities (OneToOne, OneToMany, ManyToOne, ManyToMany)
-  - Saves the generated JDL to a file that can be used with JHipster
-- `GET /api/generate/jdl/{name}`
-  - Retrieves a previously generated JDL file by name
-- `GET /api/generate/jdl/list/all`
-  - Lists all previously generated JDL files
-
-### Content Validation
-- `POST /api/validate/content`
-
-### Topic Research
-- `POST /api/research/topic`
-
-### Content Summarization
-- `POST /api/summarize`
-
-### Insight Derivation
-- `POST /api/derive/insights`
-
-### SVG Generation
-- `POST /api/generate/svg`
-
-## Request Format
-
-Each endpoint accepts a JSON payload with specific parameters. See the API documentation for details.
-
-## Response Format
-
-All responses follow a standard format:
-```json
-{
-  "success": true,
-  "data": {
-    // Response data specific to the endpoint
-  }
-}
+```bash
+curl -X POST http://localhost:3000/api/generate/code \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Create a function that calculates the Fibonacci sequence",
+    "language": "javascript",
+    "comments": true
+  }'
 ```
 
-Or in case of an error:
-```json
-{
-  "success": false,
-  "error": {
-    "message": "Error message",
-    "code": "ERROR_CODE"
-  }
-}
-``` 
+## 🔌 API Endpoints
+
+The API provides the following main endpoints:
+
+- `/api/generate/code` - Generate code based on requirements
+- `/api/validate/content` - Validate and review content
+- `/api/research/topic` - Research a specified topic
+- `/api/summarize` - Summarize content
+- `/api/derive/insights` - Extract insights from content
+- `/api/generate/svg` - Generate SVG graphics
+- `/api/generate/prototype` - Generate UI/UX prototypes
+- `/api/generate/prototype-builder` - Interactive prototype builder
+- `/api/generate/jdl` - Generate JHipster Domain Language files
+- `/api/generate/project` - Generate full project structures
+
+For detailed information about request/response formats, refer to the Swagger documentation at `/api-docs` or the `API_DOCUMENTATION.md` file.
+
+## 💻 Development
+
+### Project Structure
+
+```
+deepseek-express-api/
+├── src/
+│   ├── config/       # Configuration files
+│   ├── middleware/   # Express middleware
+│   ├── routes/       # API routes
+│   ├── services/     # Business logic
+│   ├── templates/    # Templates for generation
+│   ├── tests/        # Test files
+│   ├── utils/        # Utility functions
+│   └── index.js      # Application entry point
+├── public/           # Static files
+└── .env              # Environment variables
+```
+
+### Adding New Routes
+
+1. Create a new route file in `src/routes/`
+2. Define the route handler and validation
+3. Register the route in `src/index.js`
+
+## 🧪 Testing
+
+Run the test suite:
+
+```bash
+npm test
+```
+
+Test the connection to the local model:
+
+```bash
+npm run test:local-model
+```
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+- **"Cannot connect to Ollama"**: Ensure that Ollama is running with `ollama serve`
+- **"Model not found"**: Make sure you've pulled the model with `ollama pull deepseek-r1:8b`
+- **Connection issues**: Use the explicit IPv4 address (127.0.0.1) instead of localhost
+
+### Logs
+
+Check the server logs for detailed error information.
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details. 

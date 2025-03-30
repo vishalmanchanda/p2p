@@ -2,10 +2,10 @@ require('dotenv').config();
 const axios = require('axios');
 
 /**
- * Test the local DeepSeek model
+ * Test the local  model
  */
 async function testLocalModel() {
-  console.log('Testing connection to local DeepSeek model...');
+  console.log('Testing connection to local  model...');
   console.log(`URL: ${process.env.DEEPSEEK_API_URL}`);
   console.log(`Model: ${process.env.DEEPSEEK_MODEL}`);
   
@@ -58,10 +58,10 @@ async function testLocalModel() {
     console.log(response.data.response);
     
     console.log('\n✅ Test completed successfully!');
-    console.log('The local DeepSeek model is working correctly.');
+    console.log('The local  model is working correctly.');
     console.log('You can now start the API with: npm run dev');
   } catch (error) {
-    console.error('\n❌ Error testing local DeepSeek model:');
+    console.error('\n❌ Error testing local  model:');
     
     if (error.code === 'ECONNREFUSED') {
       console.error(`Connection refused to ${process.env.DEEPSEEK_API_URL}`);

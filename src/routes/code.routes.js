@@ -8,7 +8,7 @@ const { validate, schemas } = require('../middleware/validator');
  * /generate/code:
  *   post:
  *     summary: Generate code based on a prompt
- *     description: Uses the DeepSeek model to generate code based on the provided requirements. Returns only the actual code without explanatory text or <think> tags.
+ *     description: Uses the  model to generate code based on the provided requirements. Returns only the actual code without explanatory text or <think> tags.
  *     tags: [Code Generation]
  *     requestBody:
  *       required: true

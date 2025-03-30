@@ -4,9 +4,9 @@ const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'DeepSeek Express API',
+      title: ' Express API',
       version: '1.0.0',
-      description: 'API for interacting with the DeepSeek AI model',
+      description: 'API for interacting with the  AI model',
       license: {
         name: 'MIT',
         url: 'https://opensource.org/licenses/MIT',

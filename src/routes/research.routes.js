@@ -8,7 +8,7 @@ const { validate, schemas } = require('../middleware/validator');
  * /research/topic:
  *   post:
  *     summary: Perform research on a topic
- *     description: Uses the DeepSeek model to research a topic with customizable depth and format
+ *     description: Uses the  model to research a topic with customizable depth and format
  *     tags: [Topic Research]
  *     requestBody:
  *       required: true

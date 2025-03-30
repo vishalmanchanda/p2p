@@ -8,7 +8,7 @@ const { validate, schemas } = require('../middleware/validator');
  * /derive/insights:
  *   post:
  *     summary: Derive insights from content
- *     description: Uses the DeepSeek model to derive insights from content with customizable perspective and focus areas
+ *     description: Uses the  model to derive insights from content with customizable perspective and focus areas
  *     tags: [Insight Derivation]
  *     requestBody:
  *       required: true

@@ -5,6 +5,7 @@
  */
 
 class MockDataGenerator {
+  
   constructor(entityConfigs, options = {}) {
     this.entityConfigs = entityConfigs;
     this.options = {

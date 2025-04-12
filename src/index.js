@@ -22,6 +22,7 @@ const prototypeRoutes = require('./routes/prototype.routes');
 const prototypeBuilderRoutes = require('./routes/prototype-builder.routes');
 const jdlRoutes = require('./routes/jdl.routes');
 const genProjectRoutes = require('./routes/gen-project.routes');
+const requirementsRoutes = require('./routes/requirements.routes');
 
 
 
@@ -57,6 +58,11 @@ app.use('/public', express.static(path.join(process.cwd(), 'public')));
 // Serve wizard UI
 app.get('/wizard', (req, res) => {
   res.sendFile(path.join(process.cwd(), 'public', 'wizard', 'index.html'));
+});
+
+// Serve requirements wizard UI
+app.get('/requirements', (req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'requirements', 'index.html'));
 });
 
 // Rate limiting
@@ -95,6 +101,7 @@ app.use('/api/generate/prototype', prototypeRoutes);
 app.use('/api/generate/prototype-builder', prototypeBuilderRoutes);
 app.use('/api/generate/jdl', jdlRoutes);
 app.use('/api/generate/project', genProjectRoutes);
+app.use('/api/generate/requirements', requirementsRoutes);
 
 
 // Health check endpoint

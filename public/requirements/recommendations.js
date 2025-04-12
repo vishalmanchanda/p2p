@@ -83,9 +83,9 @@ class RecommendationsManager {
 
         if (!recommendations || (!recommendations.pages && !recommendations.components && !recommendations.workflows)) {
             this.recommendationsContainer.innerHTML = `
-                <div class="alert alert-info" role="alert">
-                    <i class="fas fa-info-circle"></i>
-                    No recommendations available at this time.
+                <div class="bg-white rounded-lg p-6 text-center">
+                    <i class="fas fa-info-circle text-4xl text-blue-500 mb-4"></i>
+                    <p class="text-gray-600">No recommendations available at this time.</p>
                 </div>`;
             return;
         }
@@ -99,78 +99,49 @@ class RecommendationsManager {
             }
             return `
                 <div class="mt-3">
-                    <h6 class="font-semibold">Features:</h6>
-                    <ul class="list-disc pl-5">
-                        ${item.features.map(feature => `<li>${feature}</li>`).join('')}
+                    <h6 class="font-semibold text-gray-700 mb-2">Features:</h6>
+                    <ul class="list-disc pl-5 space-y-1">
+                        ${item.features.map(feature => `<li class="text-gray-600">${feature}</li>`).join('')}
                     </ul>
                 </div>
             `;
         };
 
-        // Display pages
-        if (recommendations.pages && recommendations.pages.length > 0) {
-            recommendationsHtml += `
-                <div class="mb-6">
-                    <h3 class="text-xl font-semibold mb-4">Recommended Pages</h3>
-                    ${recommendations.pages.map(page => `
-                        <div class="card mb-3">
-                            <div class="card-body">
-                                <h5 class="card-title">${page.title || 'Untitled Page'}</h5>
-                                <p class="card-text">${page.description || 'No description available'}</p>
-                                ${renderFeatures(page)}
-                                <p class="card-text mt-3"><small class="text-muted">Technology: ${page.technology || 'Not specified'}</small></p>
-                                <button class="generate-code-btn mt-3 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-                                        onclick="window.recommendationsManager.generateCode('page', ${JSON.stringify(page).replace(/"/g, '&quot;')})">
-                                    <i class="fas fa-code mr-2"></i>Generate Code
-                                </button>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>`;
-        }
+        // Display all recommendations in a grid
+        const allRecommendations = [
+            ...(recommendations.pages || []).map(item => ({ ...item, type: 'Page' })),
+            ...(recommendations.components || []).map(item => ({ ...item, type: 'Component' })),
+            ...(recommendations.workflows || []).map(item => ({ ...item, type: 'Workflow' }))
+        ];
 
-        // Display components
-        if (recommendations.components && recommendations.components.length > 0) {
-            recommendationsHtml += `
-                <div class="mb-6">
-                    <h3 class="text-xl font-semibold mb-4">Recommended Components</h3>
-                    ${recommendations.components.map(component => `
-                        <div class="card mb-3">
-                            <div class="card-body">
-                                <h5 class="card-title">${component.title || 'Untitled Component'}</h5>
-                                <p class="card-text">${component.description || 'No description available'}</p>
-                                ${renderFeatures(component)}
-                                <p class="card-text mt-3"><small class="text-muted">Technology: ${component.technology || 'Not specified'}</small></p>
-                                <button class="generate-code-btn mt-3 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-                                        onclick="window.recommendationsManager.generateCode('component', ${JSON.stringify(component).replace(/"/g, '&quot;')})">
-                                    <i class="fas fa-code mr-2"></i>Generate Code
-                                </button>
+        if (allRecommendations.length > 0) {
+            recommendationsHtml = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    ${allRecommendations.map(item => `
+                        <div class="recommendation-item bg-white rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200">
+                            <div class="p-6">
+                                <div class="flex items-start justify-between mb-4">
+                                    <div class="flex-1">
+                                        <h4 class="text-lg font-semibold text-gray-800 mb-2">${item.title || 'Untitled'}</h4>
+                                        <p class="text-gray-600 mb-4">${item.description || 'No description available'}</p>
+                                        ${renderFeatures(item)}
+                                    </div>
+                                    <span class="px-3 py-1 rounded-full text-sm font-medium bg-blue-50 text-blue-600">${item.type}</span>
+                                </div>
+                                <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+                                    <div class="flex items-center space-x-2">
+                                        <span class="px-3 py-1 bg-gray-50 rounded-md text-sm text-gray-600">${item.technology || 'Not specified'}</span>
+                                    </div>
+                                    <button class="generate-code-btn inline-flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors duration-200"
+                                            onclick="window.recommendationsManager.generateCode('${item.type.toLowerCase()}', ${JSON.stringify(item).replace(/"/g, '&quot;')})">
+                                        <i class="fas fa-code mr-2"></i>Generate Code
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     `).join('')}
-                </div>`;
-        }
-
-        // Display workflows
-        if (recommendations.workflows && recommendations.workflows.length > 0) {
-            recommendationsHtml += `
-                <div class="mb-6">
-                    <h3 class="text-xl font-semibold mb-4">Recommended Workflows</h3>
-                    ${recommendations.workflows.map(workflow => `
-                        <div class="card mb-3">
-                            <div class="card-body">
-                                <h5 class="card-title">${workflow.title || 'Untitled Workflow'}</h5>
-                                <p class="card-text">${workflow.description || 'No description available'}</p>
-                                ${renderFeatures(workflow)}
-                                <p class="card-text mt-3"><small class="text-muted">Technology: ${workflow.technology || 'Not specified'}</small></p>
-                                <button class="generate-code-btn mt-3 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-                                        onclick="window.recommendationsManager.generateCode('workflow', ${JSON.stringify(workflow).replace(/"/g, '&quot;')})">
-                                    <i class="fas fa-code mr-2"></i>Generate Code
-                                </button>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>`;
+                </div>
+            `;
         }
 
         this.recommendationsContainer.innerHTML = recommendationsHtml;
@@ -178,6 +149,12 @@ class RecommendationsManager {
 
     async generateCode(type, recommendation) {
         try {
+            // Show loading state
+            const button = event.target;
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating...';
+            button.disabled = true;
+
             const response = await fetch('/api/generate/requirements/code', {
                 method: 'POST',
                 headers: {
@@ -196,46 +173,50 @@ class RecommendationsManager {
             }
 
             const data = await response.json();
-            // Show the generated code in a modal or new section
-            this.displayGeneratedCode(data.data);
+            
+            // Create a modal to display the code
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white rounded-lg p-8 max-w-4xl w-full max-h-[90vh] flex flex-col">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Generated Code</h2>
+                        <button class="text-gray-500 hover:text-gray-700 transition-colors duration-200" onclick="this.parentElement.parentElement.parentElement.remove()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="flex-1 overflow-y-auto pr-4">
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <pre class="whitespace-pre-wrap font-mono text-sm text-gray-800">${data.data.code}</pre>
+                        </div>
+                        <div class="mt-4 text-sm text-gray-600">
+                            <p class="mb-2"><strong>File Extension:</strong> ${data.data.extension}</p>
+                            <p><strong>Dependencies:</strong> ${data.data.dependencies?.join(', ') || 'None'}</p>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex justify-end space-x-4 pt-4 border-t">
+                        <button class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200" 
+                                onclick="navigator.clipboard.writeText(${JSON.stringify(data.data.code)})">
+                            <i class="fas fa-copy mr-2"></i>Copy Code
+                        </button>
+                        <button class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200"
+                                onclick="this.parentElement.parentElement.parentElement.remove()">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
         } catch (error) {
             console.error('Error generating code:', error);
-            // Show error message
             alert(`Error generating code: ${error.message}`);
+        } finally {
+            // Restore button state
+            if (button) {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
         }
-    }
-
-    displayGeneratedCode(codeData) {
-        // Create a modal to display the code
-        const modal = document.createElement('div');
-        modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-        modal.innerHTML = `
-            <div class="bg-white rounded-lg p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold">Generated Code</h2>
-                    <button class="text-gray-500 hover:text-gray-700" onclick="this.parentElement.parentElement.parentElement.remove()">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div class="bg-gray-100 p-4 rounded">
-                    <pre class="whitespace-pre-wrap">${codeData.code}</pre>
-                </div>
-                <div class="mt-4 text-sm text-gray-600">
-                    Recommended file extension: ${codeData.extension}
-                </div>
-                <div class="mt-6 flex justify-end">
-                    <button class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 mr-4" 
-                            onclick="navigator.clipboard.writeText(${JSON.stringify(codeData.code)})">
-                        <i class="fas fa-copy mr-2"></i>Copy Code
-                    </button>
-                    <button class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
-                            onclick="this.parentElement.parentElement.parentElement.remove()">
-                        Close
-                    </button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
     }
 }
 

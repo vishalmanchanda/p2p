@@ -631,7 +631,7 @@ Return ONLY the JSON object without any additional text or explanation.`;
 
 /**
  * @swagger
- * /generate-code-for-recommendation:
+ * /generate/requirements/generate-code-for-recommendation:
  *   post:
  *     summary: Generate code for a UI component or page
  *     description: Takes a recommendation and requirements to generate code for a specific UI component or page

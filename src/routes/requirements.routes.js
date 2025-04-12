@@ -3,6 +3,8 @@ const router = express.Router();
 const { validate, schemas } = require('../middleware/validator');
 const requirementsService = require('../services/requirements-generator');
 const { ApiError } = require('../middleware/errorHandler');
+const path = require('path');
+const fs = require('fs/promises');
 
 // Define validation schema for structured requirements generation
 if (!schemas.structuredRequirementsGeneration) {
@@ -39,6 +41,26 @@ if (!schemas.structuredRequirementsEnhancement) {
     modelName: require('joi').string().default('deepseek-r1:8b')
       .messages({
         'string.base': 'Model name must be a string'
+      })
+  });
+}
+
+// Define validation schema for saving requirements
+if (!schemas.saveRequirements) {
+  schemas.saveRequirements = require('joi').object({
+    fileName: require('joi').string().required().min(1).max(100)
+      .pattern(/^[a-zA-Z0-9-_]+\.json$/)
+      .messages({
+        'string.empty': 'File name is required',
+        'string.min': 'File name must be at least 1 character',
+        'string.max': 'File name must be at most 100 characters',
+        'string.pattern.base': 'File name must end with .json and contain only letters, numbers, hyphens, and underscores',
+        'any.required': 'File name is required'
+      }),
+    requirements: require('joi').object().required()
+      .messages({
+        'object.base': 'Requirements must be a valid object',
+        'any.required': 'Requirements are required'
       })
   });
 }
@@ -259,6 +281,80 @@ router.post('/enhance', validate(schemas.structuredRequirementsEnhancement), asy
     }
   } catch (error) {
     next(error);
+  }
+});
+
+/**
+ * @swagger
+ * /save-requirements:
+ *   post:
+ *     summary: Save requirements to a JSON file
+ *     description: Saves the provided requirements to a JSON file in the public/requirements directory
+ *     tags: [Requirements Generation]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - fileName
+ *               - requirements
+ *             properties:
+ *               fileName:
+ *                 type: string
+ *                 description: Name of the file to save (must end with .json)
+ *                 example: my-requirements.json
+ *               requirements:
+ *                 type: object
+ *                 description: The requirements object to save
+ *     responses:
+ *       200:
+ *         description: Successfully saved requirements
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "Requirements saved successfully"
+ *                     filePath:
+ *                       type: string
+ *                       example: "/public/requirements/my-requirements.json"
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.post('/save-requirements', validate(schemas.saveRequirements), async (req, res, next) => {
+  try {
+    const { fileName, requirements } = req.body;
+    
+    // Create the directory if it doesn't exist
+    const dirPath = path.join(process.cwd(), 'public', 'requirements');
+    await fs.mkdir(dirPath, { recursive: true });
+    
+    // Save the requirements to a file
+    const filePath = path.join(dirPath, fileName);
+    await fs.writeFile(filePath, JSON.stringify(requirements, null, 2));
+    
+    res.status(200).json({
+      success: true,
+      data: {
+        message: 'Requirements saved successfully',
+        filePath: `/public/requirements/${fileName}`
+      }
+    });
+  } catch (error) {
+    console.error('Error saving requirements:', error);
+    next(new ApiError(`Failed to save requirements: ${error.message}`, 500, 'REQUIREMENTS_SAVE_ERROR'));
   }
 });
 

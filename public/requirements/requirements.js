@@ -1,306 +1,601 @@
-document.addEventListener('DOMContentLoaded', function() {
-    // Constants
-    const API_BASE_URL = '/api';
-    const REQUIREMENTS_API = `${API_BASE_URL}/generate/requirements`;
-    
-    // State
-    let currentStructuredRequirements = null;
-    let currentView = 'card'; // 'card' or 'json'
-    
+document.addEventListener('DOMContentLoaded', () => {
     // DOM Elements
-    const requirementsEditor = document.getElementById('requirements-editor');
-    const llmModelSelect = document.getElementById('llm-model-select');
-    const generateRequirementsBtn = document.getElementById('generate-requirements-btn');
-    const generateRequirementsSpinner = document.getElementById('generate-requirements-spinner');
-    
-    const structuredRequirementsContainer = document.getElementById('structured-requirements-container');
-    const structuredRequirementsCards = document.getElementById('structured-requirements-cards');
-    const structuredRequirementsJson = document.getElementById('structured-requirements-json');
-    const jsonDisplay = document.getElementById('json-display');
-    
-    const jsonViewBtn = document.getElementById('json-view-btn');
-    const cardViewBtn = document.getElementById('card-view-btn');
-    
-    const enhancementInput = document.getElementById('enhancement-input');
-    const enhanceRequirementsBtn = document.getElementById('enhance-requirements-btn');
-    const enhanceRequirementsSpinner = document.getElementById('enhance-requirements-spinner');
-    
-    const startOverBtn = document.getElementById('start-over-btn');
-    const copyToClipboardBtn = document.getElementById('copy-to-clipboard-btn');
-    
-    const notification = document.getElementById('notification');
-    const notificationMessage = document.getElementById('notification-message');
-    
+    const startWithPromptBtn = document.getElementById('startWithPrompt');
+    const startWithJsonBtn = document.getElementById('startWithJson');
+    const promptSection = document.getElementById('promptSection');
+    const jsonSection = document.getElementById('jsonSection');
+    const saveSection = document.getElementById('saveSection');
+    const resultsSection = document.getElementById('resultsSection');
+    const cardViewBtn = document.getElementById('cardViewBtn');
+    const jsonViewBtn = document.getElementById('jsonViewBtn');
+    const cardView = document.getElementById('cardView');
+    const jsonView = document.getElementById('jsonView');
+    const jsonOutput = document.getElementById('jsonOutput');
+    const addEntityBtn = document.getElementById('addEntityBtn');
+    const entitiesList = document.getElementById('entitiesList');
+    const saveJsonBtn = document.getElementById('saveJsonBtn');
+    const fileNameInput = document.getElementById('fileName');
+
+    // Templates
+    const entityTemplate = document.getElementById('entityTemplate');
+    const attributeTemplate = document.getElementById('attributeTemplate');
+
+    let currentRequirements = {
+        personas: [],
+        goals: [],
+        coreFeatures: [],
+        keyData: {
+            entities: []
+        },
+        workflows: [],
+        constraints: []
+    };
+
+    // Helper function to normalize keyData format
+    function normalizeKeyData(data) {
+        if (Array.isArray(data)) {
+            // Convert from array format to object format
+            return {
+                entities: data.map(item => ({
+                    name: item.entity,
+                    attributes: item.attributes.map(attr => ({
+                        name: attr,
+                        type: 'text'
+                    })),
+                    description: item.description
+                }))
+            };
+        }
+        return data;
+    }
+
     // Event Listeners
-    generateRequirementsBtn.addEventListener('click', generateStructuredRequirements);
-    enhanceRequirementsBtn.addEventListener('click', enhanceStructuredRequirements);
-    jsonViewBtn.addEventListener('click', () => switchView('json'));
-    cardViewBtn.addEventListener('click', () => switchView('card'));
-    startOverBtn.addEventListener('click', startOver);
-    copyToClipboardBtn.addEventListener('click', copyToClipboard);
-    
-    // Functions
-    async function generateStructuredRequirements() {
-        const basicRequirements = requirementsEditor.value.trim();
-        if (!basicRequirements) {
-            showNotification('Please enter your basic requirements', 'error');
-            return;
-        }
-        
-        // Show loading state
-        generateRequirementsBtn.disabled = true;
-        generateRequirementsSpinner.classList.remove('hidden');
+    startWithPromptBtn.addEventListener('click', () => {
+        const originalText = startWithPromptBtn.textContent;
+        startWithPromptBtn.disabled = true;
+        startWithPromptBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Loading...';
         
         try {
-            const modelName = llmModelSelect.value;
+            promptSection.classList.remove('hidden');
+            jsonSection.classList.add('hidden');
+            startWithPromptBtn.disabled = false;
+            startWithPromptBtn.textContent = originalText;
+        } catch (error) {
+            console.error('Error switching to prompt view:', error);
+            showNotification('Error switching to prompt view', 'error');
+            startWithPromptBtn.disabled = false;
+            startWithPromptBtn.textContent = originalText;
+        }
+    });
+
+    startWithJsonBtn.addEventListener('click', () => {
+        jsonSection.classList.remove('hidden');
+        promptSection.classList.add('hidden');
+    });
+
+    document.getElementById('loadJsonBtn').addEventListener('click', () => {
+        try {
+            const jsonInput = document.getElementById('jsonInput').value.trim();
+            if (!jsonInput) {
+                showNotification('Please enter JSON data', 'error');
+                return;
+            }
+
+            const parsedJson = JSON.parse(jsonInput);
             
-            const response = await fetch(`${REQUIREMENTS_API}/structured`, {
+            // Validate the structure
+            if (!parsedJson.personas || !parsedJson.goals || !parsedJson.coreFeatures || 
+                !parsedJson.keyData || !parsedJson.workflows) {
+                showNotification('Invalid JSON structure. Required fields: personas, goals, coreFeatures, keyData, workflows', 'error');
+                return;
+            }
+
+            // Normalize keyData format
+            parsedJson.keyData = normalizeKeyData(parsedJson.keyData);
+
+            currentRequirements = parsedJson;
+            updateUI();
+            resultsSection.classList.remove('hidden');
+            saveSection.classList.remove('hidden');
+            showNotification('JSON loaded successfully', 'success');
+        } catch (error) {
+            showNotification(`Invalid JSON format: ${error.message}`, 'error');
+            console.error('Error loading JSON:', error);
+        }
+    });
+
+    document.getElementById('generateBtn').addEventListener('click', async () => {
+        const prompt = document.getElementById('requirementsPrompt').value.trim();
+        if (!prompt) {
+            showNotification('Please enter your requirements', 'error');
+            return;
+        }
+
+        // Show loading state
+        const generateBtn = document.getElementById('generateBtn');
+        const originalText = generateBtn.textContent;
+        generateBtn.disabled = true;
+        generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating...';
+        showNotification('Generating requirements...', 'info');
+
+        try {
+            const response = await fetch('/api/generate/requirements/structured', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    basicRequirements: prompt,
+                    modelName: 'deepseek-r1:8b'
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error(result.error?.message || 'Failed to generate requirements');
+            }
+
+            currentRequirements = result.data;
+            updateUI();
+            resultsSection.classList.remove('hidden');
+            saveSection.classList.remove('hidden');
+            showNotification('Requirements generated successfully', 'success');
+        } catch (error) {
+            console.error('Error generating requirements:', error);
+            showNotification(`Error generating requirements: ${error.message}`, 'error');
+        } finally {
+            // Reset button state
+            generateBtn.disabled = false;
+            generateBtn.textContent = originalText;
+        }
+    });
+
+    // View Toggle Event Listeners
+    if (cardViewBtn && jsonViewBtn && cardView && jsonView) {
+        cardViewBtn.addEventListener('click', () => {
+            cardView.classList.remove('hidden');
+            jsonView.classList.add('hidden');
+            cardViewBtn.classList.add('bg-blue-500', 'text-white');
+            cardViewBtn.classList.remove('bg-gray-200', 'text-gray-700');
+            jsonViewBtn.classList.remove('bg-blue-500', 'text-white');
+            jsonViewBtn.classList.add('bg-gray-200', 'text-gray-700');
+        });
+
+        jsonViewBtn.addEventListener('click', () => {
+            jsonView.classList.remove('hidden');
+            cardView.classList.add('hidden');
+            jsonViewBtn.classList.add('bg-blue-500', 'text-white');
+            jsonViewBtn.classList.remove('bg-gray-200', 'text-gray-700');
+            cardViewBtn.classList.remove('bg-blue-500', 'text-white');
+            cardViewBtn.classList.add('bg-gray-200', 'text-gray-700');
+            updateJsonView();
+        });
+    }
+
+    // Entity Management
+    addEntityBtn.addEventListener('click', () => {
+        const entityElement = entityTemplate.content.cloneNode(true);
+        const entityNode = setupEntityListeners(entityElement);
+        entitiesList.appendChild(entityNode);
+        updateRequirements();
+    });
+
+    // Save functionality
+    saveJsonBtn.addEventListener('click', async () => {
+        const fileName = fileNameInput.value.trim();
+        if (!fileName) {
+            showNotification('Please enter a file name', 'error');
+            return;
+        }
+
+        const fullFileName = fileName + '.json';
+        const jsonData = JSON.stringify(currentRequirements, null, 2);
+
+        // First try to save on server
+        try {
+            const response = await fetch('/api/save-requirements', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    basicRequirements,
-                    modelName
+                    fileName: fullFileName,
+                    requirements: currentRequirements
                 })
             });
-            
-            const result = await response.json();
-            
-            if (!response.ok || !result.success) {
-                throw new Error(result.error?.message || 'Failed to generate structured requirements');
+
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success) {
+                    showNotification('Requirements saved successfully on server', 'success');
+                    return;
+                }
             }
-            
-            // Store the generated requirements
-            currentStructuredRequirements = result.data;
-            
-            // Display the structured requirements
-            renderStructuredRequirements(currentStructuredRequirements);
-            structuredRequirementsContainer.classList.remove('hidden');
-            
-            showNotification('Structured requirements generated successfully', 'success');
         } catch (error) {
-            console.error('Error generating structured requirements:', error);
-            showNotification(error.message || 'Failed to generate structured requirements', 'error');
-        } finally {
-            // Hide loading state
-            generateRequirementsBtn.disabled = false;
-            generateRequirementsSpinner.classList.add('hidden');
+            console.warn('Server save failed, falling back to download:', error);
         }
-    }
-    
-    async function enhanceStructuredRequirements() {
-        const enhancementText = enhancementInput.value.trim();
-        if (!enhancementText) {
-            showNotification('Please enter your enhancement request', 'error');
-            return;
-        }
-        
-        if (!currentStructuredRequirements) {
-            showNotification('No structured requirements to enhance', 'error');
-            return;
-        }
-        
-        // Show loading state
-        enhanceRequirementsBtn.disabled = true;
-        enhanceRequirementsSpinner.classList.remove('hidden');
-        
+
+        // If server save fails or is not available, trigger download
         try {
-            const modelName = llmModelSelect.value;
-            
-            const response = await fetch(`${REQUIREMENTS_API}/enhance`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    structuredRequirements: currentStructuredRequirements,
-                    enhancementPrompt: enhancementText,
-                    modelName
-                })
-            });
-            
-            const result = await response.json();
-            
-            if (!response.ok || !result.success) {
-                throw new Error(result.error?.message || 'Failed to enhance structured requirements');
-            }
-            
-            // Update the structured requirements
-            currentStructuredRequirements = result.data;
-            
-            // Display the enhanced requirements
-            renderStructuredRequirements(currentStructuredRequirements);
-            
-            // Clear the enhancement input
-            enhancementInput.value = '';
-            
-            showNotification('Requirements enhanced successfully', 'success');
+            const blob = new Blob([jsonData], { type: 'application/json' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = fullFileName;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            showNotification('Requirements downloaded successfully', 'success');
         } catch (error) {
-            console.error('Error enhancing structured requirements:', error);
-            showNotification(error.message || 'Failed to enhance structured requirements', 'error');
-        } finally {
-            // Hide loading state
-            enhanceRequirementsBtn.disabled = false;
-            enhanceRequirementsSpinner.classList.add('hidden');
+            console.error('Error downloading requirements:', error);
+            showNotification(`Error saving requirements: ${error.message}`, 'error');
         }
-    }
-    
-    function renderStructuredRequirements(requirements) {
-        // Update JSON view
-        jsonDisplay.textContent = JSON.stringify(requirements, null, 2);
+    });
+
+    // Helper Functions
+    function setupItemListeners(element, type) {
+        const elementNode = document.importNode(element, true);
+        const removeButton = elementNode.querySelector('.remove-item');
+        const inputs = elementNode.querySelectorAll('input, select');
         
-        // Update card view
-        structuredRequirementsCards.innerHTML = '';
-        
-        // Personas section
-        if (requirements.personas && requirements.personas.length > 0) {
-            const personasCard = createSectionCard('Personas', requirements.personas.map(persona => ({
-                title: persona.name,
-                content: persona.description
-            })));
-            structuredRequirementsCards.appendChild(personasCard);
-        }
-        
-        // Goals section
-        if (requirements.goals && requirements.goals.length > 0) {
-            const goalsCard = createSectionCard('Goals', requirements.goals.map(goal => ({
-                title: goal.title,
-                content: goal.description
-            })));
-            structuredRequirementsCards.appendChild(goalsCard);
-        }
-        
-        // Core Features section
-        if (requirements.coreFeatures && requirements.coreFeatures.length > 0) {
-            const featuresCard = createSectionCard('Core Features', requirements.coreFeatures.map(feature => ({
-                title: `${feature.title} (${feature.priority})`,
-                content: feature.description
-            })));
-            structuredRequirementsCards.appendChild(featuresCard);
-        }
-        
-        // Key Data section
-        if (requirements.keyData && requirements.keyData.length > 0) {
-            const dataCard = createSectionCard('Key Data', requirements.keyData.map(data => ({
-                title: data.entity,
-                content: `${data.description}<br><strong>Attributes:</strong> ${data.attributes.join(', ')}`
-            })));
-            structuredRequirementsCards.appendChild(dataCard);
-        }
-        
-        // Workflows section
-        if (requirements.workflows && requirements.workflows.length > 0) {
-            const workflowsCard = createSectionCard('Workflows', requirements.workflows.map(workflow => ({
-                title: workflow.name,
-                content: `${workflow.description}<br><strong>Steps:</strong><ol>${workflow.steps.map(step => `<li>${step}</li>`).join('')}</ol>`
-            })));
-            structuredRequirementsCards.appendChild(workflowsCard);
-        }
-        
-        // Constraints section
-        if (requirements.constraints && requirements.constraints.length > 0) {
-            const constraintsCard = createSectionCard('Constraints', requirements.constraints.map(constraint => ({
-                title: constraint.type,
-                content: constraint.description
-            })));
-            structuredRequirementsCards.appendChild(constraintsCard);
-        }
-        
-        // Show the current view
-        switchView(currentView);
-    }
-    
-    function createSectionCard(title, items) {
-        const card = document.createElement('div');
-        card.className = 'card mb-4';
-        
-        const cardHeader = document.createElement('div');
-        cardHeader.className = 'card-header bg-primary text-white';
-        cardHeader.textContent = title;
-        
-        const cardBody = document.createElement('div');
-        cardBody.className = 'card-body p-3';
-        
-        items.forEach(item => {
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'mb-3 pb-3 border-bottom';
-            
-            const itemTitle = document.createElement('h6');
-            itemTitle.className = 'font-weight-bold';
-            itemTitle.textContent = item.title;
-            
-            const itemContent = document.createElement('div');
-            itemContent.className = 'text-muted small';
-            itemContent.innerHTML = item.content;
-            
-            itemDiv.appendChild(itemTitle);
-            itemDiv.appendChild(itemContent);
-            cardBody.appendChild(itemDiv);
+        removeButton.addEventListener('click', () => {
+            if (confirm('Are you sure you want to remove this item?')) {
+                removeButton.closest('.persona-item, .goal-item, .feature-item, .workflow-item, .constraint-item').remove();
+                updateRequirements();
+            }
         });
         
-        card.appendChild(cardHeader);
-        card.appendChild(cardBody);
-        
-        return card;
+        inputs.forEach(input => {
+            input.addEventListener('change', updateRequirements);
+        });
+
+        return elementNode;
     }
-    
-    function switchView(view) {
-        currentView = view;
+
+    function setupStepListeners(stepElement, container) {
+        const stepNode = document.importNode(stepElement, true);
+        const removeButton = stepNode.querySelector('.remove-step');
+        const input = stepNode.querySelector('input');
         
-        if (view === 'json') {
-            structuredRequirementsCards.classList.add('hidden');
-            structuredRequirementsJson.classList.remove('hidden');
-            jsonViewBtn.classList.add('btn-primary');
-            jsonViewBtn.classList.remove('btn-outline-secondary');
-            cardViewBtn.classList.add('btn-outline-secondary');
-            cardViewBtn.classList.remove('btn-primary');
-        } else {
-            structuredRequirementsCards.classList.remove('hidden');
-            structuredRequirementsJson.classList.add('hidden');
-            cardViewBtn.classList.add('btn-primary');
-            cardViewBtn.classList.remove('btn-outline-secondary');
-            jsonViewBtn.classList.add('btn-outline-secondary');
-            jsonViewBtn.classList.remove('btn-primary');
-        }
-    }
-    
-    function startOver() {
-        requirementsEditor.value = '';
-        enhancementInput.value = '';
-        currentStructuredRequirements = null;
-        structuredRequirementsContainer.classList.add('hidden');
-        structuredRequirementsCards.innerHTML = '';
-        jsonDisplay.textContent = '';
-    }
-    
-    async function copyToClipboard() {
-        if (!currentStructuredRequirements) {
-            showNotification('No requirements to copy', 'error');
-            return;
-        }
+        removeButton.addEventListener('click', () => {
+            if (confirm('Are you sure you want to remove this step?')) {
+                removeButton.closest('.step-item').remove();
+                updateRequirements();
+            }
+        });
         
+        input.addEventListener('change', updateRequirements);
+
+        return stepNode;
+    }
+
+    function setupEntityListeners(entityElement) {
+        const entityNode = document.importNode(entityElement, true);
+        const removeButton = entityNode.querySelector('.remove-entity');
+        const addAttributeButton = entityNode.querySelector('.add-attribute');
+        const entityNameInput = entityNode.querySelector('.entity-name');
+        const attributesList = entityNode.querySelector('.attributes-list');
+        
+        removeButton.addEventListener('click', () => {
+            if (confirm('Are you sure you want to remove this entity?')) {
+                removeButton.closest('.entity-item').remove();
+                updateRequirements();
+            }
+        });
+        
+        addAttributeButton.addEventListener('click', () => {
+            const attrElement = attributeTemplate.content.cloneNode(true);
+            const attrNode = setupAttributeListeners(attrElement);
+            attributesList.appendChild(attrNode);
+            updateRequirements();
+        });
+        
+        entityNameInput.addEventListener('change', updateRequirements);
+
+        return entityNode;
+    }
+
+    function setupAttributeListeners(attrElement) {
+        const attrNode = document.importNode(attrElement, true);
+        const removeButton = attrNode.querySelector('.remove-attribute');
+        const inputs = attrNode.querySelectorAll('input, select');
+        
+        removeButton.addEventListener('click', () => {
+            if (confirm('Are you sure you want to remove this attribute?')) {
+                removeButton.closest('.attribute-item').remove();
+                updateRequirements();
+            }
+        });
+        
+        inputs.forEach(input => {
+            input.addEventListener('change', updateRequirements);
+        });
+
+        return attrNode;
+    }
+
+    function updateRequirements() {
         try {
-            const text = JSON.stringify(currentStructuredRequirements, null, 2);
-            await navigator.clipboard.writeText(text);
-            showNotification('Requirements copied to clipboard', 'success');
+            // Update personas
+            currentRequirements.personas = Array.from(document.getElementById('personasContent').children).map(element => {
+                const inputs = element.querySelectorAll('input');
+                return {
+                    name: inputs[0].value,
+                    description: inputs[1].value
+                };
+            }).filter(item => item.name);
+
+            // Update goals
+            currentRequirements.goals = Array.from(document.getElementById('goalsContent').children).map(element => {
+                const inputs = element.querySelectorAll('input');
+                return {
+                    title: inputs[0].value,
+                    description: inputs[1].value
+                };
+            }).filter(item => item.title);
+
+            // Update core features
+            currentRequirements.coreFeatures = Array.from(document.getElementById('coreFeaturesContent').children).map(element => {
+                const inputs = element.querySelectorAll('input');
+                const select = element.querySelector('select');
+                return {
+                    title: inputs[0].value,
+                    description: inputs[1].value,
+                    priority: select.value
+                };
+            }).filter(item => item.title);
+
+            // Update workflows
+            currentRequirements.workflows = Array.from(document.getElementById('workflowsContent').children).map(element => {
+                const nameInput = element.querySelector('.workflow-name');
+                const descriptionInput = element.querySelector('.workflow-description');
+                const steps = Array.from(element.querySelectorAll('.step-item input')).map(input => input.value);
+                return {
+                    name: nameInput.value,
+                    description: descriptionInput.value,
+                    steps: steps.filter(Boolean)
+                };
+            }).filter(item => item.name);
+
+            // Update constraints
+            currentRequirements.constraints = Array.from(document.getElementById('constraintsContent').children).map(element => {
+                const select = element.querySelector('select');
+                const input = element.querySelector('input');
+                return {
+                    type: select.value,
+                    description: input.value
+                };
+            }).filter(item => item.description);
+
+            // Update entities
+            currentRequirements.keyData.entities = Array.from(document.getElementById('entitiesList').children).map(entityElement => {
+                const name = entityElement.querySelector('.entity-name').value;
+                const attributes = Array.from(entityElement.querySelectorAll('.attribute-item')).map(attrElement => ({
+                    name: attrElement.querySelector('.attribute-name').value,
+                    type: attrElement.querySelector('.attribute-type').value
+                })).filter(attr => attr.name && attr.type);
+
+                return { name, attributes };
+            }).filter(entity => entity.name);
+
+            updateJsonView();
         } catch (error) {
-            console.error('Error copying to clipboard:', error);
-            showNotification('Failed to copy to clipboard', 'error');
+            console.error('Error updating requirements:', error);
+            showNotification('Error updating requirements: ' + error.message, 'error');
         }
     }
-    
-    function showNotification(message, type) {
-        notification.className = 'notification';
-        notification.classList.add(type);
-        notificationMessage.textContent = message;
-        
-        // Show the notification
-        notification.classList.add('show');
-        
-        // Hide the notification after 3 seconds
+
+    function updateUI() {
+        try {
+            // Show the results section
+            if (resultsSection) {
+                resultsSection.classList.remove('hidden');
+            }
+            
+            // Show card view by default
+            if (cardView && jsonView) {
+                cardView.classList.remove('hidden');
+                jsonView.classList.add('hidden');
+                if (cardViewBtn && jsonViewBtn) {
+                    cardViewBtn.classList.add('bg-blue-500', 'text-white');
+                    cardViewBtn.classList.remove('bg-gray-200', 'text-gray-700');
+                    jsonViewBtn.classList.remove('bg-blue-500', 'text-white');
+                    jsonViewBtn.classList.add('bg-gray-200', 'text-gray-700');
+                }
+            }
+
+            // Update personas
+            const personasContent = document.getElementById('personasContent');
+            personasContent.innerHTML = '';
+            if (currentRequirements.personas && Array.isArray(currentRequirements.personas)) {
+                currentRequirements.personas.forEach(persona => {
+                    const personaElement = document.getElementById('personaTemplate').content.cloneNode(true);
+                    const inputs = personaElement.querySelectorAll('input');
+                    if (typeof persona === 'object') {
+                        inputs[0].value = persona.name || '';
+                        inputs[1].value = persona.description || '';
+                    } else {
+                        inputs[0].value = persona;
+                        inputs[1].value = '';
+                    }
+                    const personaNode = setupItemListeners(personaElement, 'personas');
+                    personasContent.appendChild(personaNode);
+                });
+            }
+
+            // Update goals
+            const goalsContent = document.getElementById('goalsContent');
+            goalsContent.innerHTML = '';
+            if (currentRequirements.goals && Array.isArray(currentRequirements.goals)) {
+                currentRequirements.goals.forEach(goal => {
+                    const goalElement = document.getElementById('goalTemplate').content.cloneNode(true);
+                    const inputs = goalElement.querySelectorAll('input');
+                    if (typeof goal === 'object') {
+                        inputs[0].value = goal.title || '';
+                        inputs[1].value = goal.description || '';
+                    } else {
+                        inputs[0].value = goal;
+                        inputs[1].value = '';
+                    }
+                    const goalNode = setupItemListeners(goalElement, 'goals');
+                    goalsContent.appendChild(goalNode);
+                });
+            }
+
+            // Update core features
+            const coreFeaturesContent = document.getElementById('coreFeaturesContent');
+            coreFeaturesContent.innerHTML = '';
+            if (currentRequirements.coreFeatures && Array.isArray(currentRequirements.coreFeatures)) {
+                currentRequirements.coreFeatures.forEach(feature => {
+                    const featureElement = document.getElementById('featureTemplate').content.cloneNode(true);
+                    const inputs = featureElement.querySelectorAll('input');
+                    const select = featureElement.querySelector('select');
+                    if (typeof feature === 'object') {
+                        inputs[0].value = feature.title || '';
+                        inputs[1].value = feature.description || '';
+                        select.value = feature.priority || 'Medium';
+                    } else {
+                        inputs[0].value = feature;
+                        inputs[1].value = '';
+                        select.value = 'Medium';
+                    }
+                    const featureNode = setupItemListeners(featureElement, 'coreFeatures');
+                    coreFeaturesContent.appendChild(featureNode);
+                });
+            }
+
+            // Update workflows
+            const workflowsContent = document.getElementById('workflowsContent');
+            workflowsContent.innerHTML = '';
+            if (currentRequirements.workflows && Array.isArray(currentRequirements.workflows)) {
+                currentRequirements.workflows.forEach(workflow => {
+                    const workflowElement = document.getElementById('workflowTemplate').content.cloneNode(true);
+                    const nameInput = workflowElement.querySelector('.workflow-name');
+                    const descriptionInput = workflowElement.querySelector('.workflow-description');
+                    const stepsContainer = workflowElement.querySelector('.steps-container');
+                    
+                    if (typeof workflow === 'object') {
+                        nameInput.value = workflow.name || '';
+                        descriptionInput.value = workflow.description || '';
+                        
+                        if (Array.isArray(workflow.steps)) {
+                            workflow.steps.forEach(step => {
+                                const stepElement = document.getElementById('stepTemplate').content.cloneNode(true);
+                                const stepInput = stepElement.querySelector('input');
+                                stepInput.value = step;
+                                const stepNode = setupStepListeners(stepElement, stepsContainer);
+                                stepsContainer.appendChild(stepNode);
+                            });
+                        }
+                    } else {
+                        nameInput.value = workflow;
+                        descriptionInput.value = '';
+                    }
+                    
+                    const workflowNode = setupItemListeners(workflowElement, 'workflows');
+                    workflowsContent.appendChild(workflowNode);
+                });
+            }
+
+            // Update constraints
+            const constraintsContent = document.getElementById('constraintsContent');
+            constraintsContent.innerHTML = '';
+            if (currentRequirements.constraints && Array.isArray(currentRequirements.constraints)) {
+                currentRequirements.constraints.forEach(constraint => {
+                    const constraintElement = document.getElementById('constraintTemplate').content.cloneNode(true);
+                    const select = constraintElement.querySelector('select');
+                    const input = constraintElement.querySelector('input');
+                    if (typeof constraint === 'object') {
+                        select.value = constraint.type || 'Technical';
+                        input.value = constraint.description || '';
+                    } else {
+                        select.value = 'Technical';
+                        input.value = constraint;
+                    }
+                    const constraintNode = setupItemListeners(constraintElement, 'constraints');
+                    constraintsContent.appendChild(constraintNode);
+                });
+            }
+
+            // Update entities
+            const entitiesList = document.getElementById('entitiesList');
+            entitiesList.innerHTML = '';
+            if (currentRequirements.keyData && currentRequirements.keyData.entities && Array.isArray(currentRequirements.keyData.entities)) {
+                currentRequirements.keyData.entities.forEach(entity => {
+                    const entityElement = entityTemplate.content.cloneNode(true);
+                    const entityNode = setupEntityListeners(entityElement);
+                    const entityNameInput = entityNode.querySelector('.entity-name');
+                    const attributesList = entityNode.querySelector('.attributes-list');
+                    
+                    entityNameInput.value = entity.name || '';
+                    
+                    if (Array.isArray(entity.attributes)) {
+                        entity.attributes.forEach(attr => {
+                            const attrElement = attributeTemplate.content.cloneNode(true);
+                            const attrNode = setupAttributeListeners(attrElement);
+                            const attrNameInput = attrNode.querySelector('.attribute-name');
+                            const attrTypeInput = attrNode.querySelector('.attribute-type');
+                            
+                            if (typeof attr === 'object') {
+                                attrNameInput.value = attr.name || '';
+                                attrTypeInput.value = attr.type || 'text';
+                            } else {
+                                attrNameInput.value = attr;
+                                attrTypeInput.value = 'text';
+                            }
+                            
+                            attributesList.appendChild(attrNode);
+                        });
+                    }
+                    
+                    entitiesList.appendChild(entityNode);
+                });
+            }
+
+            updateJsonView();
+        } catch (error) {
+            console.error('Error updating UI:', error);
+            showNotification('Error updating UI: ' + error.message, 'error');
+        }
+    }
+
+    function updateJsonView() {
+        try {
+            if (jsonOutput) {
+                jsonOutput.textContent = JSON.stringify(currentRequirements, null, 2);
+            }
+        } catch (error) {
+            console.error('Error updating JSON view:', error);
+            showNotification('Error updating JSON view: ' + error.message, 'error');
+        }
+    }
+
+    function showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 px-4 py-2 rounded-lg text-white ${
+            type === 'error' ? 'bg-red-500' : 
+            type === 'success' ? 'bg-green-500' : 
+            'bg-blue-500'
+        }`;
+        notification.textContent = message;
+
+        // Add to document
+        document.body.appendChild(notification);
+
+        // Remove after 3 seconds
         setTimeout(() => {
-            notification.classList.remove('show');
+            notification.remove();
         }, 3000);
     }
+
+    // Initialize
+    cardViewBtn.classList.add('bg-blue-500', 'text-white');
+    jsonViewBtn.classList.add('bg-gray-200', 'text-gray-700');
 }); 

@@ -53,7 +53,13 @@ app.use(express.json());
 app.use(morgan('dev'));
 
 // Serve static files from the public directory
-app.use('/public', express.static(path.join(process.cwd(), 'public')));
+app.use('/public', express.static(path.join(process.cwd(), 'public'), {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript');
+    }
+  }
+}));
 
 // Serve wizard UI
 app.get('/wizard', (req, res) => {

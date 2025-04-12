@@ -31,6 +31,22 @@ document.addEventListener('DOMContentLoaded', () => {
         constraints: []
     };
 
+    // Add entity configs view button
+    const entityConfigsViewBtn = document.createElement('button');
+    entityConfigsViewBtn.id = 'entityConfigsViewBtn';
+    entityConfigsViewBtn.className = 'px-4 py-2 rounded-lg bg-gray-200 text-gray-700';
+    entityConfigsViewBtn.innerHTML = '<i class="fas fa-cogs mr-2"></i>Entity Configs';
+    jsonViewBtn.parentNode.appendChild(entityConfigsViewBtn);
+
+    // Add entity configs view section
+    const entityConfigsView = document.createElement('div');
+    entityConfigsView.id = 'entityConfigsView';
+    entityConfigsView.className = 'hidden';
+    const entityConfigsOutput = document.createElement('pre');
+    entityConfigsOutput.className = 'whitespace-pre-wrap';
+    entityConfigsView.appendChild(entityConfigsOutput);
+    jsonView.parentNode.appendChild(entityConfigsView);
+
     // Helper function to normalize keyData format
     function normalizeKeyData(data) {
         if (Array.isArray(data)) {
@@ -155,24 +171,43 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // View Toggle Event Listeners
-    if (cardViewBtn && jsonViewBtn && cardView && jsonView) {
+    if (cardViewBtn && jsonViewBtn && cardView && jsonView && entityConfigsView) {
         cardViewBtn.addEventListener('click', () => {
             cardView.classList.remove('hidden');
             jsonView.classList.add('hidden');
+            entityConfigsView.classList.add('hidden');
             cardViewBtn.classList.add('bg-blue-500', 'text-white');
             cardViewBtn.classList.remove('bg-gray-200', 'text-gray-700');
             jsonViewBtn.classList.remove('bg-blue-500', 'text-white');
             jsonViewBtn.classList.add('bg-gray-200', 'text-gray-700');
+            entityConfigsViewBtn.classList.remove('bg-blue-500', 'text-white');
+            entityConfigsViewBtn.classList.add('bg-gray-200', 'text-gray-700');
         });
 
         jsonViewBtn.addEventListener('click', () => {
             jsonView.classList.remove('hidden');
             cardView.classList.add('hidden');
+            entityConfigsView.classList.add('hidden');
             jsonViewBtn.classList.add('bg-blue-500', 'text-white');
             jsonViewBtn.classList.remove('bg-gray-200', 'text-gray-700');
             cardViewBtn.classList.remove('bg-blue-500', 'text-white');
             cardViewBtn.classList.add('bg-gray-200', 'text-gray-700');
+            entityConfigsViewBtn.classList.remove('bg-blue-500', 'text-white');
+            entityConfigsViewBtn.classList.add('bg-gray-200', 'text-gray-700');
             updateJsonView();
+        });
+
+        entityConfigsViewBtn.addEventListener('click', () => {
+            entityConfigsView.classList.remove('hidden');
+            cardView.classList.add('hidden');
+            jsonView.classList.add('hidden');
+            entityConfigsViewBtn.classList.add('bg-blue-500', 'text-white');
+            entityConfigsViewBtn.classList.remove('bg-gray-200', 'text-gray-700');
+            cardViewBtn.classList.remove('bg-blue-500', 'text-white');
+            cardViewBtn.classList.add('bg-gray-200', 'text-gray-700');
+            jsonViewBtn.classList.remove('bg-blue-500', 'text-white');
+            jsonViewBtn.classList.add('bg-gray-200', 'text-gray-700');
+            updateEntityConfigsView();
         });
     }
 
@@ -195,6 +230,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const fullFileName = fileName + '.json';
         const jsonData = JSON.stringify(currentRequirements, null, 2);
 
+        // Generate entity configurations
+        const entityConfigs = generateEntityConfigs(currentRequirements.keyData);
+        const entityConfigsData = `// Generated from ${fullFileName}\n\n${entityConfigs}`;
+
         // First try to save on server
         try {
             const response = await fetch('/api/save-requirements', {
@@ -204,14 +243,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
                 body: JSON.stringify({
                     fileName: fullFileName,
-                    requirements: currentRequirements
+                    requirements: currentRequirements,
+                    entityConfigsFileName: fileName + '-entity-configs.js',
+                    entityConfigs: entityConfigsData
                 })
             });
 
             if (response.ok) {
                 const result = await response.json();
                 if (result.success) {
-                    showNotification('Requirements saved successfully on server', 'success');
+                    showNotification('Requirements and entity configurations saved successfully on server', 'success');
                     return;
                 }
             }
@@ -219,24 +260,153 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn('Server save failed, falling back to download:', error);
         }
 
-        // If server save fails or is not available, trigger download
+        // If server save fails or is not available, trigger downloads
         try {
-            const blob = new Blob([jsonData], { type: 'application/json' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = url;
-            a.download = fullFileName;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-            showNotification('Requirements downloaded successfully', 'success');
+            // Download requirements JSON
+            const jsonBlob = new Blob([jsonData], { type: 'application/json' });
+            const jsonUrl = window.URL.createObjectURL(jsonBlob);
+            const jsonLink = document.createElement('a');
+            jsonLink.style.display = 'none';
+            jsonLink.href = jsonUrl;
+            jsonLink.download = fullFileName;
+            document.body.appendChild(jsonLink);
+            jsonLink.click();
+            window.URL.revokeObjectURL(jsonUrl);
+            document.body.removeChild(jsonLink);
+
+            // Download entity configurations
+            const configBlob = new Blob([entityConfigsData], { type: 'application/javascript' });
+            const configUrl = window.URL.createObjectURL(configBlob);
+            const configLink = document.createElement('a');
+            configLink.style.display = 'none';
+            configLink.href = configUrl;
+            configLink.download = fileName + '-entity-configs.js';
+            document.body.appendChild(configLink);
+            configLink.click();
+            window.URL.revokeObjectURL(configUrl);
+            document.body.removeChild(configLink);
+
+            showNotification('Requirements and entity configurations downloaded successfully', 'success');
         } catch (error) {
-            console.error('Error downloading requirements:', error);
-            showNotification(`Error saving requirements: ${error.message}`, 'error');
+            console.error('Error downloading files:', error);
+            showNotification(`Error saving files: ${error.message}`, 'error');
         }
     });
+
+    function generateEntityConfigs(keyData) {
+        const entities = Array.isArray(keyData) ? keyData : (keyData.entities || []);
+        const configs = entities.map(entity => {
+            const entityName = (entity.entity || entity.name || '').toLowerCase();
+            const attributes = (entity.attributes || []).map(attr => {
+                const attrName = typeof attr === 'string' ? attr : attr.name;
+                const attrType = typeof attr === 'string' ? inferType(attr) : (attr.type || 'text');
+                
+                return {
+                    name: attrName.toLowerCase().replace(/\s+/g, ''),
+                    label: formatLabel(attrName),
+                    type: attrType,
+                    required: isRequired(attrName),
+                    ...getAdditionalProps(attrName, attrType)
+                };
+            });
+
+            return {
+                entityName: entityName + 's',
+                title: formatLabel(entityName) + ' Management',
+                apiBaseUrl: 'http://localhost:3005',
+                itemsPerPage: 10,
+                attributes
+            };
+        });
+
+        const configsArray = configs.map((config, index) => {
+            const varName = config.entityName.slice(0, -1) + 'Config';
+            return `const ${varName} = ${JSON.stringify(config, null, 2)};`;
+        }).join('\n\n');
+
+        const exportNames = configs.map(config => config.entityName.slice(0, -1) + 'Config');
+        const configuredEntities = configs.map(config => ({
+            name: config.entityName.slice(0, -1),
+            config: config.entityName.slice(0, -1) + 'Config'
+        }));
+
+        return `${configsArray}
+
+const configuredEntities = [${configuredEntities.map(e => `{name: '${e.name}', config: ${e.config}}`).join(', ')}];
+
+// Add this for Node.js compatibility
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { configuredEntities, ${exportNames.join(', ')} };
+}`;
+    }
+
+    function inferType(attrName) {
+        const name = attrName.toLowerCase();
+        if (name.includes('date')) return 'date';
+        if (name.includes('email')) return 'email';
+        if (name.includes('price') || name.includes('amount') || name.includes('cost')) return 'number';
+        if (name.includes('description') || name.includes('notes')) return 'textarea';
+        if (name.includes('status') || name.includes('active')) return 'checkbox';
+        if (name.includes('type') || name.includes('category')) return 'select';
+        return 'text';
+    }
+
+    function formatLabel(name) {
+        return name
+            .split(/(?=[A-Z])|[\s_-]/)
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .join(' ');
+    }
+
+    function isRequired(attrName) {
+        const name = attrName.toLowerCase();
+        return name.includes('id') || 
+               name.includes('name') || 
+               name.includes('email') ||
+               name.includes('price') ||
+               name.includes('amount');
+    }
+
+    function getAdditionalProps(attrName, type) {
+        const name = attrName.toLowerCase();
+        const props = {};
+
+        if (type === 'number') {
+            if (name.includes('price') || name.includes('amount') || name.includes('cost')) {
+                props.prefix = '$';
+                props.step = '0.01';
+                props.min = 0;
+            } else {
+                props.min = 0;
+            }
+        }
+
+        if (type === 'textarea') {
+            props.hideInTable = true;
+        }
+
+        if (type === 'checkbox') {
+            props.checkboxLabel = name.includes('active') ? 'Active' : 'Enabled';
+        }
+
+        if (type === 'select') {
+            if (name.includes('status')) {
+                props.options = [
+                    { value: 'active', label: 'Active' },
+                    { value: 'inactive', label: 'Inactive' },
+                    { value: 'pending', label: 'Pending' }
+                ];
+            } else if (name.includes('type') || name.includes('category')) {
+                props.options = [
+                    { value: 'type1', label: 'Type 1' },
+                    { value: 'type2', label: 'Type 2' },
+                    { value: 'type3', label: 'Type 3' }
+                ];
+            }
+        }
+
+        return props;
+    }
 
     // Helper Functions
     function setupItemListeners(element, type) {
@@ -399,14 +569,17 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             // Show card view by default
-            if (cardView && jsonView) {
+            if (cardView && jsonView && entityConfigsView) {
                 cardView.classList.remove('hidden');
                 jsonView.classList.add('hidden');
-                if (cardViewBtn && jsonViewBtn) {
+                entityConfigsView.classList.add('hidden');
+                if (cardViewBtn && jsonViewBtn && entityConfigsViewBtn) {
                     cardViewBtn.classList.add('bg-blue-500', 'text-white');
                     cardViewBtn.classList.remove('bg-gray-200', 'text-gray-700');
                     jsonViewBtn.classList.remove('bg-blue-500', 'text-white');
                     jsonViewBtn.classList.add('bg-gray-200', 'text-gray-700');
+                    entityConfigsViewBtn.classList.remove('bg-blue-500', 'text-white');
+                    entityConfigsViewBtn.classList.add('bg-gray-200', 'text-gray-700');
                 }
             }
 
@@ -573,6 +746,18 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error('Error updating JSON view:', error);
             showNotification('Error updating JSON view: ' + error.message, 'error');
+        }
+    }
+
+    function updateEntityConfigsView() {
+        try {
+            if (entityConfigsOutput) {
+                const entityConfigs = generateEntityConfigs(currentRequirements.keyData);
+                entityConfigsOutput.textContent = entityConfigs;
+            }
+        } catch (error) {
+            console.error('Error updating entity configs view:', error);
+            showNotification('Error updating entity configs view: ' + error.message, 'error');
         }
     }
 

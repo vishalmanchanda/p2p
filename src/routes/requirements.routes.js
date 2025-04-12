@@ -61,6 +61,21 @@ if (!schemas.saveRequirements) {
       .messages({
         'object.base': 'Requirements must be a valid object',
         'any.required': 'Requirements are required'
+      }),
+    entityConfigsFileName: require('joi').string().required().min(1).max(100)
+      .pattern(/^[a-zA-Z0-9-_]+\.js$/)
+      .messages({
+        'string.empty': 'Entity configs file name is required',
+        'string.min': 'Entity configs file name must be at least 1 character',
+        'string.max': 'Entity configs file name must be at most 100 characters',
+        'string.pattern.base': 'Entity configs file name must end with .js and contain only letters, numbers, hyphens, and underscores',
+        'any.required': 'Entity configs file name is required'
+      }),
+    entityConfigs: require('joi').string().required()
+      .messages({
+        'string.empty': 'Entity configs are required',
+        'string.base': 'Entity configs must be a string',
+        'any.required': 'Entity configs are required'
       })
   });
 }
@@ -288,8 +303,8 @@ router.post('/enhance', validate(schemas.structuredRequirementsEnhancement), asy
  * @swagger
  * /save-requirements:
  *   post:
- *     summary: Save requirements to a JSON file
- *     description: Saves the provided requirements to a JSON file in the public/requirements directory
+ *     summary: Save requirements and entity configurations
+ *     description: Saves the provided requirements to a JSON file and entity configurations to a JS file
  *     tags: [Requirements Generation]
  *     requestBody:
  *       required: true
@@ -300,17 +315,26 @@ router.post('/enhance', validate(schemas.structuredRequirementsEnhancement), asy
  *             required:
  *               - fileName
  *               - requirements
+ *               - entityConfigsFileName
+ *               - entityConfigs
  *             properties:
  *               fileName:
  *                 type: string
- *                 description: Name of the file to save (must end with .json)
+ *                 description: Name of the requirements file to save (must end with .json)
  *                 example: my-requirements.json
  *               requirements:
  *                 type: object
  *                 description: The requirements object to save
+ *               entityConfigsFileName:
+ *                 type: string
+ *                 description: Name of the entity configs file to save (must end with .js)
+ *                 example: my-requirements-entity-configs.js
+ *               entityConfigs:
+ *                 type: string
+ *                 description: The entity configurations code to save
  *     responses:
  *       200:
- *         description: Successfully saved requirements
+ *         description: Successfully saved files
  *         content:
  *           application/json:
  *             schema:
@@ -324,10 +348,13 @@ router.post('/enhance', validate(schemas.structuredRequirementsEnhancement), asy
  *                   properties:
  *                     message:
  *                       type: string
- *                       example: "Requirements saved successfully"
- *                     filePath:
+ *                       example: "Files saved successfully"
+ *                     requirementsPath:
  *                       type: string
  *                       example: "/public/requirements/my-requirements.json"
+ *                     entityConfigsPath:
+ *                       type: string
+ *                       example: "/public/requirements/my-requirements-entity-configs.js"
  *       400:
  *         $ref: '#/components/responses/BadRequest'
  *       500:
@@ -335,26 +362,31 @@ router.post('/enhance', validate(schemas.structuredRequirementsEnhancement), asy
  */
 router.post('/save-requirements', validate(schemas.saveRequirements), async (req, res, next) => {
   try {
-    const { fileName, requirements } = req.body;
+    const { fileName, requirements, entityConfigsFileName, entityConfigs } = req.body;
     
     // Create the directory if it doesn't exist
     const dirPath = path.join(process.cwd(), 'public', 'requirements');
     await fs.mkdir(dirPath, { recursive: true });
     
-    // Save the requirements to a file
-    const filePath = path.join(dirPath, fileName);
-    await fs.writeFile(filePath, JSON.stringify(requirements, null, 2));
+    // Save the requirements to a JSON file
+    const requirementsPath = path.join(dirPath, fileName);
+    await fs.writeFile(requirementsPath, JSON.stringify(requirements, null, 2));
+
+    // Save the entity configurations to a JS file
+    const entityConfigsPath = path.join(dirPath, entityConfigsFileName);
+    await fs.writeFile(entityConfigsPath, entityConfigs);
     
     res.status(200).json({
       success: true,
       data: {
-        message: 'Requirements saved successfully',
-        filePath: `/public/requirements/${fileName}`
+        message: 'Files saved successfully',
+        requirementsPath: `/public/requirements/${fileName}`,
+        entityConfigsPath: `/public/requirements/${entityConfigsFileName}`
       }
     });
   } catch (error) {
-    console.error('Error saving requirements:', error);
-    next(new ApiError(`Failed to save requirements: ${error.message}`, 500, 'REQUIREMENTS_SAVE_ERROR'));
+    console.error('Error saving files:', error);
+    next(new ApiError(`Failed to save files: ${error.message}`, 500, 'FILES_SAVE_ERROR'));
   }
 });
 

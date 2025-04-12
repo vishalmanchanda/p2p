@@ -59,7 +59,7 @@ async function checkModelOrExit() {
     console.error('\n❌ Error: Local  model is not running.');
     console.error('\nTroubleshooting steps:');
     console.error('1. Make sure Ollama is running with: ollama serve');
-    console.error('2. Check if you can access the Ollama UI at: http://localhost:11434/');
+    console.error('2. Check if you can access the Ollama UI at: http://127.0.0.1:11434/');
     console.error('3. Try using the explicit IPv4 address in .env: DEEPSEEK_API_URL=http://127.0.0.1:11434');
     console.error('4. Check if there are any firewalls blocking the connection');
     console.error('5. Verify Ollama is listening on the correct port with: lsof -i :11434');

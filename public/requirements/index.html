@@ -234,18 +234,101 @@
             </div>
 
             <!-- Results Section -->
-            <div id="resultsSection" class="hidden">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-2xl font-semibold">Results</h2>
-                    <div class="flex space-x-2">
-                        <button id="cardViewBtn" class="px-4 py-2 rounded-lg bg-blue-500 text-white">
-                            <i class="fas fa-th-large mr-2"></i>Card View
-                        </button>
-                        <button id="jsonViewBtn" class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700">
-                            <i class="fas fa-code mr-2"></i>JSON View
-                        </button>
+            <div id="resultsSection" class="hidden space-y-8">
+                <!-- View toggle buttons -->
+                <div class="flex space-x-4">
+                    <button id="cardViewBtn" class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700">
+                        <i class="fas fa-columns mr-2"></i>Card View
+                    </button>
+                    <button id="jsonViewBtn" class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700">
+                        <i class="fas fa-code mr-2"></i>JSON View
+                    </button>
+                    <button id="recommendationsBtn" class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700">
+                        <i class="fas fa-lightbulb mr-2"></i>Get Recommendations
+                    </button>
+                </div>
+
+                <!-- Recommendations Modal -->
+                <div id="recommendationsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div class="bg-white rounded-lg p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-bold">UI Recommendations</h2>
+                            <button id="closeRecommendationsBtn" class="text-gray-500 hover:text-gray-700">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        
+                        <div id="recommendationsContent" class="space-y-6">
+                            <!-- Loading State -->
+                            <div id="recommendationsLoading" class="hidden text-center py-8">
+                                <i class="fas fa-spinner fa-spin text-4xl text-blue-500 mb-4"></i>
+                                <p class="text-gray-600">Analyzing requirements and generating recommendations...</p>
+                            </div>
+
+                            <!-- Generate Recommendations Button -->
+                            <div class="text-center mb-6">
+                                <button id="generateRecommendationsBtn" class="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                                    <i class="fas fa-lightbulb mr-2"></i>Generate Recommendations
+                                </button>
+                            </div>
+
+                            <!-- Recommendations Container -->
+                            <div id="recommendationsContainer" class="space-y-4">
+                                <!-- Recommendations will be displayed here -->
+                            </div>
+
+                            <!-- Recommendations Categories -->
+                            <div id="recommendationsList" class="space-y-8">
+                                <div class="pages-section">
+                                    <h3 class="text-xl font-semibold mb-4">Recommended Pages</h3>
+                                    <div id="pagesRecommendations" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                                </div>
+
+                                <div class="components-section">
+                                    <h3 class="text-xl font-semibold mb-4">Recommended Components</h3>
+                                    <div id="componentsRecommendations" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                                </div>
+
+                                <div class="workflows-section">
+                                    <h3 class="text-xl font-semibold mb-4">Recommended Workflows</h3>
+                                    <div id="workflowsRecommendations" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="mt-8 flex justify-end space-x-4">
+                            <button id="exportRecommendationsBtn" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                                <i class="fas fa-download mr-2"></i>Export Recommendations
+                            </button>
+                            <button id="closeRecommendationsModalBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                                Close
+                            </button>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Recommendation Item Template -->
+                <template id="recommendationItemTemplate">
+                    <div class="recommendation-item bg-white rounded-lg shadow p-4 border border-gray-200">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <h4 class="recommendation-title text-lg font-semibold mb-2"></h4>
+                                <p class="recommendation-description text-gray-600 mb-3"></p>
+                                <div class="recommendation-features space-y-2"></div>
+                            </div>
+                            <span class="recommendation-type px-3 py-1 rounded-full text-sm font-medium"></span>
+                        </div>
+                        <div class="mt-4 flex justify-between items-center">
+                            <div class="space-x-2">
+                                <span class="recommendation-tech px-2 py-1 bg-gray-100 rounded-md text-sm text-gray-600"></span>
+                            </div>
+                            <button class="generate-code-btn px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600 text-sm">
+                                <i class="fas fa-code mr-1"></i>Generate Code
+                            </button>
+                        </div>
+                    </div>
+                </template>
 
                 <!-- Card View -->
                 <div id="cardView" class="space-y-6">
@@ -313,5 +396,6 @@
     </div>
 
     <script src="/public/requirements/requirements.js"></script>
+    <script src="/public/requirements/recommendations.js"></script>
 </body>
 </html> 

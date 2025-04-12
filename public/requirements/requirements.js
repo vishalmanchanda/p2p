@@ -1,3 +1,16 @@
+// Initialize global currentRequirements
+window.currentRequirements = {
+    personas: [],
+    goals: [],
+    coreFeatures: [],
+    keyData: {
+        entities: [],
+        relationships: []
+    },
+    workflows: [],
+    constraints: []
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     // DOM Elements
     const startWithPromptBtn = document.getElementById('startWithPrompt');
@@ -20,18 +33,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const entityTemplate = document.getElementById('entityTemplate');
     const attributeTemplate = document.getElementById('attributeTemplate');
     const relationshipTemplate = document.getElementById('relationshipTemplate');
-
-    let currentRequirements = {
-        personas: [],
-        goals: [],
-        coreFeatures: [],
-        keyData: {
-            entities: [],
-            relationships: []
-        },
-        workflows: [],
-        constraints: []
-    };
 
     // Add entity configs view button
     const entityConfigsViewBtn = document.createElement('button');

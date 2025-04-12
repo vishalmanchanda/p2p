@@ -5,6 +5,7 @@ const requirementsService = require('../services/requirements-generator');
 const { ApiError } = require('../middleware/errorHandler');
 const path = require('path');
 const fs = require('fs/promises');
+const fetch = require('node-fetch');
 
 // Define validation schema for structured requirements generation
 if (!schemas.structuredRequirementsGeneration) {
@@ -388,6 +389,404 @@ router.post('/save-requirements', validate(schemas.saveRequirements), async (req
     console.error('Error saving files:', error);
     next(new ApiError(`Failed to save files: ${error.message}`, 500, 'FILES_SAVE_ERROR'));
   }
+});
+
+/**
+ * @swagger
+ * /generate/requirements/list-recommendations:
+ *   post:
+ *     summary: Generate UI recommendations based on requirements
+ *     description: Takes structured requirements and generates UI recommendations including pages, components, and workflows
+ *     tags: [Requirements Generation]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - requirements
+ *             properties:
+ *               requirements:
+ *                 type: object
+ *                 description: The structured requirements object containing personas, goals, features, etc.
+ *                 properties:
+ *                   personas:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                   goals:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                   coreFeatures:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                   keyData:
+ *                     type: object
+ *                   workflows:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                   constraints:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *     responses:
+ *       200:
+ *         description: Successfully generated recommendations
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     pages:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           title:
+ *                             type: string
+ *                           description:
+ *                             type: string
+ *                           features:
+ *                             type: array
+ *                             items:
+ *                               type: string
+ *                           technology:
+ *                             type: string
+ *                     components:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           title:
+ *                             type: string
+ *                           description:
+ *                             type: string
+ *                           features:
+ *                             type: array
+ *                             items:
+ *                               type: string
+ *                           technology:
+ *                             type: string
+ *                     workflows:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           title:
+ *                             type: string
+ *                           description:
+ *                             type: string
+ *                           features:
+ *                             type: array
+ *                             items:
+ *                               type: string
+ *                           technology:
+ *                             type: string
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       429:
+ *         $ref: '#/components/responses/TooManyRequests'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.post('/list-recommendations', async (req, res) => {
+    try {
+        const { requirements } = req.body;
+
+        if (!requirements) {
+            return res.status(400).json({
+                success: false,
+                error: { message: 'Requirements data is required' }
+            });
+        }
+
+        // Set a timeout for the generation
+        const timeout = setTimeout(() => {
+            console.error('Recommendations generation timed out after 60 seconds');
+            return res.status(504).json({
+                success: false,
+                error: { message: 'Recommendations generation timed out' }
+            });
+        }, 60000);
+
+        try {
+            // Prepare the prompt for the LLM
+            const prompt = `Given the following application requirements, suggest appropriate UI components, pages, and workflows. Focus on modern, user-friendly designs and best practices.
+
+Requirements:
+${JSON.stringify(requirements, null, 2)}
+
+Please provide recommendations in the following format:
+{
+    "pages": [
+        {
+            "title": "Page name",
+            "description": "Brief description of the page's purpose",
+            "features": ["Key feature 1", "Key feature 2"],
+            "technology": "Recommended technology stack"
+        }
+    ],
+    "components": [
+        {
+            "title": "Component name",
+            "description": "Brief description of the component's purpose",
+            "features": ["Feature 1", "Feature 2"],
+            "technology": "Recommended technology stack"
+        }
+    ],
+    "workflows": [
+        {
+            "title": "Workflow name",
+            "description": "Brief description of the workflow",
+            "features": ["Step 1", "Step 2"],
+            "technology": "Recommended technology stack"
+        }
+    ]
+}
+
+Focus on:
+1. Dashboard layouts and visualizations for data-heavy features
+2. Form designs and input components for data entry
+3. Navigation and menu structures
+4. List and table components for data display
+5. Modal and dialog components for user interactions
+6. Workflow wizards and step-by-step guides
+7. Search and filter components
+8. Notification and alert systems
+
+Return ONLY the JSON object without any additional text or explanation.`;
+
+            // Call the LLM to generate recommendations
+            const response = await fetch('http://127.0.0.1:11434/api/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: 'deepseek-r1:8b',
+                    prompt: prompt,
+                    stream: false,
+                    format: 'json'
+                })
+            });
+
+            // Clear the timeout since we got a response
+            clearTimeout(timeout);
+
+            if (!response.ok) {
+                throw new Error(`LLM API error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            
+            // The LLM response is in result.response
+            let recommendations;
+            try {
+                // Try to parse the response as JSON
+                recommendations = JSON.parse(result.response);
+            } catch (parseError) {
+                console.error('Failed to parse LLM response as JSON:', result.response);
+                throw new Error('Failed to parse recommendations from LLM');
+            }
+
+            // Validate the recommendations structure
+            if (!recommendations || typeof recommendations !== 'object') {
+                throw new Error('Invalid recommendations format from LLM');
+            }
+
+            // Ensure each section exists with proper structure
+            const validatedRecommendations = {
+                pages: Array.isArray(recommendations.pages) ? recommendations.pages : [],
+                components: Array.isArray(recommendations.components) ? recommendations.components : [],
+                workflows: Array.isArray(recommendations.workflows) ? recommendations.workflows : []
+            };
+
+            return res.json({
+                success: true,
+                data: validatedRecommendations
+            });
+        } catch (error) {
+            // Clear the timeout in case of error
+            clearTimeout(timeout);
+            throw error;
+        }
+    } catch (error) {
+        console.error('Error generating recommendations:', error);
+        return res.status(500).json({
+            success: false,
+            error: { message: error.message }
+        });
+    }
+});
+
+/**
+ * @swagger
+ * /generate-code-for-recommendation:
+ *   post:
+ *     summary: Generate code for a UI component or page
+ *     description: Takes a recommendation and requirements to generate code for a specific UI component or page
+ *     tags: [Requirements Generation]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - recommendation
+ *               - type
+ *               - requirements
+ *             properties:
+ *               recommendation:
+ *                 type: object
+ *                 description: The recommendation object for which to generate code
+ *                 properties:
+ *                   title:
+ *                     type: string
+ *                   description:
+ *                     type: string
+ *                   features:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *                   technology:
+ *                     type: string
+ *               type:
+ *                 type: string
+ *                 description: Type of code to generate (page, component, or workflow)
+ *                 enum: [page, component, workflow]
+ *               requirements:
+ *                 type: object
+ *                 description: The structured requirements object
+ *     responses:
+ *       200:
+ *         description: Successfully generated code
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     code:
+ *                       type: string
+ *                       description: The generated code
+ *                     extension:
+ *                       type: string
+ *                       description: The recommended file extension
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       429:
+ *         $ref: '#/components/responses/TooManyRequests'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.post('/generate-code-for-recommendation', async (req, res) => {
+    try {
+        const { recommendation, type, requirements } = req.body;
+
+        if (!recommendation || !type || !requirements) {
+            return res.status(400).json({
+                success: false,
+                error: { message: 'Recommendation, type, and requirements data are required' }
+            });
+        }
+
+        if (!['page', 'component', 'workflow'].includes(type)) {
+            return res.status(400).json({
+                success: false,
+                error: { message: 'Type must be one of: page, component, workflow' }
+            });
+        }
+
+        // Set a timeout for the generation
+        const timeout = setTimeout(() => {
+            console.error('Code generation timed out after 60 seconds');
+            return res.status(504).json({
+                success: false,
+                error: { message: 'Code generation timed out' }
+            });
+        }, 60000);
+
+        try {
+            // Prepare the prompt for code generation
+            const prompt = `Generate code for a ${type} based on the following recommendation and requirements:
+
+Recommendation:
+${JSON.stringify(recommendation, null, 2)}
+
+Application Requirements:
+${JSON.stringify(requirements, null, 2)}
+
+Please provide the code in the following format:
+{
+    "code": "// The actual code here",
+    "extension": "appropriate file extension (js, jsx, ts, tsx, vue, etc.)"
+}
+
+Use modern best practices and include:
+1. Proper imports and dependencies
+2. Component structure and styling
+3. State management if needed
+4. Error handling
+5. Loading states
+6. Responsive design
+7. Accessibility features
+8. Comments explaining complex logic`;
+
+            // Call the LLM to generate code
+            const response = await fetch('http://127.0.0.1:11434/api/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: 'deepseek-r1:8b',
+                    prompt: prompt,
+                    format: 'json'
+                })
+            });
+
+            // Clear the timeout since we got a response
+            clearTimeout(timeout);
+
+            if (!response.ok) {
+                throw new Error(`LLM API error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            const generatedCode = JSON.parse(result.response);
+
+            return res.json({
+                success: true,
+                data: generatedCode
+            });
+        } catch (error) {
+            // Clear the timeout in case of error
+            clearTimeout(timeout);
+            throw error;
+        }
+    } catch (error) {
+        console.error('Error generating code:', error);
+        return res.status(500).json({
+            success: false,
+            error: { message: error.message }
+        });
+    }
 });
 
 module.exports = router; 

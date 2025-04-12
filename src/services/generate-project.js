@@ -331,7 +331,7 @@ const configuredEntities = [{name: 'entityName', config: entityConfig}, ...];
         maxTokens: 4096
       }),
       new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('AI service timeout')), 60000)
+        setTimeout(() => reject(new Error('AI service timeout')), 180000)
       )
     ]);
     

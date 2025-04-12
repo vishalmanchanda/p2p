@@ -2,13 +2,12 @@ class RecommendationsManager {
     constructor() {
         this.recommendationsContainer = document.getElementById('recommendationsContainer');
         this.generateRecommendationsBtn = document.getElementById('generateRecommendationsBtn');
-        this.recommendationsModal = document.getElementById('recommendationsModal');
+        this.recommendationsSection = document.getElementById('recommendationsSection');
         this.recommendationsBtn = document.getElementById('recommendationsBtn');
         this.closeRecommendationsBtn = document.getElementById('closeRecommendationsBtn');
-        this.closeRecommendationsModalBtn = document.getElementById('closeRecommendationsModalBtn');
         
-        if (!this.recommendationsContainer || !this.generateRecommendationsBtn || !this.recommendationsModal || 
-            !this.recommendationsBtn || !this.closeRecommendationsBtn || !this.closeRecommendationsModalBtn) {
+        if (!this.recommendationsContainer || !this.generateRecommendationsBtn || !this.recommendationsSection || 
+            !this.recommendationsBtn || !this.closeRecommendationsBtn) {
             console.warn('Required elements not found. Recommendations functionality may not work properly.');
             return;
         }
@@ -17,18 +16,16 @@ class RecommendationsManager {
     }
 
     setupEventListeners() {
-        // Show modal when recommendations button is clicked
+        // Show recommendations section when recommendations button is clicked
         this.recommendationsBtn.addEventListener('click', () => {
-            this.recommendationsModal.classList.remove('hidden');
+            this.recommendationsSection.classList.remove('hidden');
+            // Scroll to recommendations section
+            this.recommendationsSection.scrollIntoView({ behavior: 'smooth' });
         });
 
-        // Close modal when close buttons are clicked
+        // Close recommendations section when close button is clicked
         this.closeRecommendationsBtn.addEventListener('click', () => {
-            this.recommendationsModal.classList.add('hidden');
-        });
-
-        this.closeRecommendationsModalBtn.addEventListener('click', () => {
-            this.recommendationsModal.classList.add('hidden');
+            this.recommendationsSection.classList.add('hidden');
         });
 
         // Generate recommendations when button is clicked
@@ -48,8 +45,6 @@ class RecommendationsManager {
             if (!window.currentRequirements) {
                 throw new Error('No requirements data available. Please generate or load requirements first.');
             }
-
-            console.log('Current requirements:', window.currentRequirements);
 
             const response = await fetch('/api/generate/requirements/list-recommendations', {
                 method: 'POST',
@@ -97,6 +92,21 @@ class RecommendationsManager {
 
         let recommendationsHtml = '';
 
+        // Helper function to safely render features
+        const renderFeatures = (item) => {
+            if (!item.features || !Array.isArray(item.features)) {
+                return '';
+            }
+            return `
+                <div class="mt-3">
+                    <h6 class="font-semibold">Features:</h6>
+                    <ul class="list-disc pl-5">
+                        ${item.features.map(feature => `<li>${feature}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        };
+
         // Display pages
         if (recommendations.pages && recommendations.pages.length > 0) {
             recommendationsHtml += `
@@ -105,15 +115,10 @@ class RecommendationsManager {
                     ${recommendations.pages.map(page => `
                         <div class="card mb-3">
                             <div class="card-body">
-                                <h5 class="card-title">${page.title}</h5>
-                                <p class="card-text">${page.description}</p>
-                                <div class="mt-3">
-                                    <h6 class="font-semibold">Features:</h6>
-                                    <ul class="list-disc pl-5">
-                                        ${page.features.map(feature => `<li>${feature}</li>`).join('')}
-                                    </ul>
-                                </div>
-                                <p class="card-text mt-3"><small class="text-muted">Technology: ${page.technology}</small></p>
+                                <h5 class="card-title">${page.title || 'Untitled Page'}</h5>
+                                <p class="card-text">${page.description || 'No description available'}</p>
+                                ${renderFeatures(page)}
+                                <p class="card-text mt-3"><small class="text-muted">Technology: ${page.technology || 'Not specified'}</small></p>
                                 <button class="generate-code-btn mt-3 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
                                         onclick="window.recommendationsManager.generateCode('page', ${JSON.stringify(page).replace(/"/g, '&quot;')})">
                                     <i class="fas fa-code mr-2"></i>Generate Code
@@ -132,15 +137,10 @@ class RecommendationsManager {
                     ${recommendations.components.map(component => `
                         <div class="card mb-3">
                             <div class="card-body">
-                                <h5 class="card-title">${component.title}</h5>
-                                <p class="card-text">${component.description}</p>
-                                <div class="mt-3">
-                                    <h6 class="font-semibold">Features:</h6>
-                                    <ul class="list-disc pl-5">
-                                        ${component.features.map(feature => `<li>${feature}</li>`).join('')}
-                                    </ul>
-                                </div>
-                                <p class="card-text mt-3"><small class="text-muted">Technology: ${component.technology}</small></p>
+                                <h5 class="card-title">${component.title || 'Untitled Component'}</h5>
+                                <p class="card-text">${component.description || 'No description available'}</p>
+                                ${renderFeatures(component)}
+                                <p class="card-text mt-3"><small class="text-muted">Technology: ${component.technology || 'Not specified'}</small></p>
                                 <button class="generate-code-btn mt-3 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
                                         onclick="window.recommendationsManager.generateCode('component', ${JSON.stringify(component).replace(/"/g, '&quot;')})">
                                     <i class="fas fa-code mr-2"></i>Generate Code
@@ -159,15 +159,10 @@ class RecommendationsManager {
                     ${recommendations.workflows.map(workflow => `
                         <div class="card mb-3">
                             <div class="card-body">
-                                <h5 class="card-title">${workflow.title}</h5>
-                                <p class="card-text">${workflow.description}</p>
-                                <div class="mt-3">
-                                    <h6 class="font-semibold">Steps:</h6>
-                                    <ul class="list-disc pl-5">
-                                        ${workflow.features.map(feature => `<li>${feature}</li>`).join('')}
-                                    </ul>
-                                </div>
-                                <p class="card-text mt-3"><small class="text-muted">Technology: ${workflow.technology}</small></p>
+                                <h5 class="card-title">${workflow.title || 'Untitled Workflow'}</h5>
+                                <p class="card-text">${workflow.description || 'No description available'}</p>
+                                ${renderFeatures(workflow)}
+                                <p class="card-text mt-3"><small class="text-muted">Technology: ${workflow.technology || 'Not specified'}</small></p>
                                 <button class="generate-code-btn mt-3 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
                                         onclick="window.recommendationsManager.generateCode('workflow', ${JSON.stringify(workflow).replace(/"/g, '&quot;')})">
                                     <i class="fas fa-code mr-2"></i>Generate Code

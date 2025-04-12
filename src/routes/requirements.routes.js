@@ -272,7 +272,7 @@ router.post('/enhance', validate(schemas.structuredRequirementsEnhancement), asy
     const timeout = setTimeout(() => {
       console.error('Structured requirements enhancement timed out after 60 seconds');
       return next(new ApiError('Structured requirements enhancement timed out', 504, 'REQUIREMENTS_ENHANCEMENT_TIMEOUT'));
-    }, 60000); // 60 second timeout
+    }, 180000); // 60 second timeout
     
     try {
       // Enhance structured requirements
@@ -517,7 +517,7 @@ router.post('/list-recommendations', async (req, res) => {
                 success: false,
                 error: { message: 'Recommendations generation timed out' }
             });
-        }, 60000);
+        }, 180000);
 
         try {
             // Prepare the prompt for the LLM
@@ -720,7 +720,7 @@ router.post('/generate-code-for-recommendation', async (req, res) => {
                 success: false,
                 error: { message: 'Code generation timed out' }
             });
-        }, 60000);
+        }, 240000);
 
         try {
             // Prepare the prompt for code generation

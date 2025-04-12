@@ -155,6 +155,34 @@
                 </div>
             </template>
 
+            <template id="relationshipTemplate">
+                <div class="relationship-item mb-4 p-4 bg-white rounded-lg shadow">
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="flex-1 grid grid-cols-7 gap-2 items-center">
+                            <select class="source-entity col-span-2 px-3 py-2 border rounded">
+                                <option value="">Select Source Entity</option>
+                            </select>
+                            <select class="relationship-type col-span-3 px-3 py-2 border rounded">
+                                <option value="one-to-one">One-to-One</option>
+                                <option value="one-to-many">One-to-Many</option>
+                                <option value="many-to-one">Many-to-One</option>
+                                <option value="many-to-many">Many-to-Many</option>
+                            </select>
+                            <select class="target-entity col-span-2 px-3 py-2 border rounded">
+                                <option value="">Select Target Entity</option>
+                            </select>
+                        </div>
+                        <button class="remove-relationship ml-2 text-red-500 hover:text-red-700">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <input type="text" class="source-field px-3 py-2 border rounded" placeholder="Source Field Name">
+                        <input type="text" class="target-field px-3 py-2 border rounded" placeholder="Target Field Name">
+                    </div>
+                </div>
+            </template>
+
             <!-- Start Options -->
             <div class="bg-white rounded-lg shadow-md p-6 mb-6">
                 <h2 class="text-xl font-semibold mb-4">How would you like to start?</h2>
@@ -260,6 +288,17 @@
                             </button>
                         </div>
                         <div id="entitiesList" class="space-y-4"></div>
+
+                        <!-- Entity Relationships Section -->
+                        <div class="mt-8">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-semibold">Entity Relationships</h3>
+                                <button id="addRelationshipBtn" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600">
+                                    <i class="fas fa-plus mr-2"></i>Add Relationship
+                                </button>
+                            </div>
+                            <div id="relationshipsList" class="space-y-4"></div>
+                        </div>
                     </div>
                 </div>
 

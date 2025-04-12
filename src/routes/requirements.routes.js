@@ -160,7 +160,7 @@ router.post('/structured', validate(schemas.structuredRequirementsGeneration), a
     const timeout = setTimeout(() => {
       console.error('Structured requirements generation timed out after 60 seconds');
       return next(new ApiError('Structured requirements generation timed out', 504, 'REQUIREMENTS_GENERATION_TIMEOUT'));
-    }, 60000); // 60 second timeout
+    }, 180000); // 60 second timeout
     
     try {
       // Generate structured requirements

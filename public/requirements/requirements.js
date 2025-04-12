@@ -19,13 +19,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Templates
     const entityTemplate = document.getElementById('entityTemplate');
     const attributeTemplate = document.getElementById('attributeTemplate');
+    const relationshipTemplate = document.getElementById('relationshipTemplate');
 
     let currentRequirements = {
         personas: [],
         goals: [],
         coreFeatures: [],
         keyData: {
-            entities: []
+            entities: [],
+            relationships: []
         },
         workflows: [],
         constraints: []
@@ -47,23 +49,9 @@ document.addEventListener('DOMContentLoaded', () => {
     entityConfigsView.appendChild(entityConfigsOutput);
     jsonView.parentNode.appendChild(entityConfigsView);
 
-    // Helper function to normalize keyData format
-    function normalizeKeyData(data) {
-        if (Array.isArray(data)) {
-            // Convert from array format to object format
-            return {
-                entities: data.map(item => ({
-                    name: item.entity,
-                    attributes: item.attributes.map(attr => ({
-                        name: attr,
-                        type: 'text'
-                    })),
-                    description: item.description
-                }))
-            };
-        }
-        return data;
-    }
+    // Add relationship button
+    const addRelationshipBtn = document.getElementById('addRelationshipBtn');
+    const relationshipsList = document.getElementById('relationshipsList');
 
     // Event Listeners
     startWithPromptBtn.addEventListener('click', () => {
@@ -153,6 +141,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await response.json();
             if (!result.success) {
                 throw new Error(result.error?.message || 'Failed to generate requirements');
+            }
+
+            // Normalize the keyData structure in the result
+            if (result.data) {
+                result.data.keyData = normalizeKeyData(result.data.keyData);
             }
 
             currentRequirements = result.data;
@@ -293,8 +286,119 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    addRelationshipBtn.addEventListener('click', () => {
+        const relationshipElement = relationshipTemplate.content.cloneNode(true);
+        const relationshipNode = setupRelationshipListeners(relationshipElement);
+        updateEntitySelects(relationshipNode);
+        relationshipsList.appendChild(relationshipNode);
+        updateRequirements();
+    });
+
+    function setupRelationshipListeners(relationshipElement) {
+        const relationshipNode = document.importNode(relationshipElement, true);
+        const removeButton = relationshipNode.querySelector('.remove-relationship');
+        const sourceEntity = relationshipNode.querySelector('.source-entity');
+        const targetEntity = relationshipNode.querySelector('.target-entity');
+        const relationshipType = relationshipNode.querySelector('.relationship-type');
+        const sourceField = relationshipNode.querySelector('.source-field');
+        const targetField = relationshipNode.querySelector('.target-field');
+        
+        removeButton.addEventListener('click', () => {
+            if (confirm('Are you sure you want to remove this relationship?')) {
+                removeButton.closest('.relationship-item').remove();
+                updateRequirements();
+            }
+        });
+        
+        [sourceEntity, targetEntity, relationshipType, sourceField, targetField].forEach(input => {
+            input.addEventListener('change', updateRequirements);
+        });
+
+        return relationshipNode;
+    }
+
+    function updateEntitySelects(relationshipNode) {
+        const sourceSelect = relationshipNode.querySelector('.source-entity');
+        const targetSelect = relationshipNode.querySelector('.target-entity');
+        
+        // Get current values before clearing
+        const currentSourceValue = sourceSelect.value;
+        const currentTargetValue = targetSelect.value;
+
+        // Clear existing options
+        sourceSelect.innerHTML = '';
+        targetSelect.innerHTML = '';
+
+        // Add default options
+        sourceSelect.appendChild(new Option('Select Source Entity', ''));
+        targetSelect.appendChild(new Option('Select Target Entity', ''));
+
+        // Get entities from current requirements
+        const entities = currentRequirements?.keyData?.entities || [];
+        console.log('Available entities:', entities);
+
+        // Add entities to source dropdown
+        entities.forEach(entity => {
+            const entityName = entity.name || entity.entity;
+            if (entityName && typeof entityName === 'string' && entityName.trim()) {
+                sourceSelect.appendChild(new Option(formatLabel(entityName), entityName));
+            }
+        });
+
+        // Function to update target dropdown
+        function updateTargetOptions() {
+            // Clear existing options except the first one
+            while (targetSelect.options.length > 1) {
+                targetSelect.remove(1);
+            }
+
+            // Add all entities except the selected source
+            entities.forEach(entity => {
+                const entityName = entity.name || entity.entity;
+                if (entityName && typeof entityName === 'string' && entityName.trim() && entityName !== sourceSelect.value) {
+                    targetSelect.appendChild(new Option(formatLabel(entityName), entityName));
+                }
+            });
+        }
+
+        // Add change listener to source select
+        sourceSelect.onchange = function() {
+            updateTargetOptions();
+            updateRequirements();
+        };
+
+        // Restore previous values if valid
+        if (currentSourceValue) {
+            sourceSelect.value = currentSourceValue;
+            updateTargetOptions();
+            if (currentTargetValue && currentTargetValue !== currentSourceValue) {
+                targetSelect.value = currentTargetValue;
+            }
+        } else {
+            updateTargetOptions();
+        }
+    }
+
+    function updateAllEntitySelects() {
+        const relationshipItems = document.querySelectorAll('.relationship-item');
+        relationshipItems.forEach(item => {
+            const sourceSelect = item.querySelector('.source-entity');
+            const targetSelect = item.querySelector('.target-entity');
+            const currentSourceValue = sourceSelect.value;
+            const currentTargetValue = targetSelect.value;
+
+            updateEntitySelects(item);
+
+            // Restore selected values
+            if (currentSourceValue) sourceSelect.value = currentSourceValue;
+            if (currentTargetValue) targetSelect.value = currentTargetValue;
+        });
+    }
+
     function generateEntityConfigs(keyData) {
         const entities = Array.isArray(keyData) ? keyData : (keyData.entities || []);
+        const relationships = keyData.relationships || [];
+        
         const configs = entities.map(entity => {
             const entityName = (entity.entity || entity.name || '').toLowerCase();
             const attributes = (entity.attributes || []).map(attr => {
@@ -308,6 +412,29 @@ document.addEventListener('DOMContentLoaded', () => {
                     required: isRequired(attrName),
                     ...getAdditionalProps(attrName, attrType)
                 };
+            });
+
+            // Add relationship fields
+            const entityRelationships = relationships.filter(rel => 
+                rel.sourceEntity === entity.name || rel.targetEntity === entity.name
+            );
+
+            entityRelationships.forEach(rel => {
+                const isSource = rel.sourceEntity === entity.name;
+                const fieldName = isSource ? rel.sourceField : rel.targetField;
+                const relatedEntity = isSource ? rel.targetEntity : rel.sourceEntity;
+                const relationType = isSource ? rel.type : reverseRelationType(rel.type);
+
+                if (fieldName) {
+                    attributes.push({
+                        name: fieldName.toLowerCase().replace(/\s+/g, ''),
+                        label: formatLabel(fieldName),
+                        type: 'relation',
+                        relatedEntity: relatedEntity.toLowerCase() + 's',
+                        relationType: relationType,
+                        required: false
+                    });
+                }
             });
 
             return {
@@ -406,6 +533,14 @@ if (typeof module !== 'undefined' && module.exports) {
         }
 
         return props;
+    }
+
+    function reverseRelationType(type) {
+        switch (type) {
+            case 'one-to-many': return 'many-to-one';
+            case 'many-to-one': return 'one-to-many';
+            default: return type;
+        }
     }
 
     // Helper Functions
@@ -545,16 +680,50 @@ if (typeof module !== 'undefined' && module.exports) {
 
             // Update entities
             currentRequirements.keyData.entities = Array.from(document.getElementById('entitiesList').children).map(entityElement => {
-                const name = entityElement.querySelector('.entity-name').value;
+                const nameInput = entityElement.querySelector('.entity-name');
+                const name = nameInput.value.trim();
                 const attributes = Array.from(entityElement.querySelectorAll('.attribute-item')).map(attrElement => ({
-                    name: attrElement.querySelector('.attribute-name').value,
+                    name: attrElement.querySelector('.attribute-name').value.trim(),
                     type: attrElement.querySelector('.attribute-type').value
                 })).filter(attr => attr.name && attr.type);
 
-                return { name, attributes };
-            }).filter(entity => entity.name);
+                // Preserve the original entity property if it exists
+                const existingEntity = currentRequirements.keyData.entities.find(e => 
+                    (e.name === name || e.entity === name)
+                );
+
+                return {
+                    entity: name, // Always set entity property
+                    name: name,   // Also set name property for compatibility
+                    attributes,
+                    description: existingEntity?.description || ''
+                };
+            }).filter(entity => entity.name || entity.entity);
+
+            console.log('Updated entities:', currentRequirements.keyData.entities);
+
+            // Update relationships
+            currentRequirements.keyData.relationships = Array.from(document.getElementById('relationshipsList').children).map(relationshipElement => {
+                const sourceEntity = relationshipElement.querySelector('.source-entity').value;
+                const targetEntity = relationshipElement.querySelector('.target-entity').value;
+                const relationshipType = relationshipElement.querySelector('.relationship-type').value;
+                const sourceField = relationshipElement.querySelector('.source-field').value;
+                const targetField = relationshipElement.querySelector('.target-field').value;
+
+                return {
+                    sourceEntity,
+                    targetEntity,
+                    type: relationshipType,
+                    sourceField,
+                    targetField
+                };
+            }).filter(rel => rel.sourceEntity && rel.targetEntity);
+
+            console.log('Updated relationships:', currentRequirements.keyData.relationships); // Debug log
 
             updateJsonView();
+            updateEntityConfigsView();
+            updateAllEntitySelects();
         } catch (error) {
             console.error('Error updating requirements:', error);
             showNotification('Error updating requirements: ' + error.message, 'error');
@@ -699,14 +868,15 @@ if (typeof module !== 'undefined' && module.exports) {
             // Update entities
             const entitiesList = document.getElementById('entitiesList');
             entitiesList.innerHTML = '';
-            if (currentRequirements.keyData && currentRequirements.keyData.entities && Array.isArray(currentRequirements.keyData.entities)) {
+            if (currentRequirements.keyData && Array.isArray(currentRequirements.keyData.entities)) {
                 currentRequirements.keyData.entities.forEach(entity => {
                     const entityElement = entityTemplate.content.cloneNode(true);
                     const entityNode = setupEntityListeners(entityElement);
                     const entityNameInput = entityNode.querySelector('.entity-name');
                     const attributesList = entityNode.querySelector('.attributes-list');
                     
-                    entityNameInput.value = entity.name || '';
+                    // Handle both name and entity properties
+                    entityNameInput.value = entity.name || entity.entity || '';
                     
                     if (Array.isArray(entity.attributes)) {
                         entity.attributes.forEach(attr => {
@@ -731,7 +901,34 @@ if (typeof module !== 'undefined' && module.exports) {
                 });
             }
 
+            // Update relationships
+            const relationshipsList = document.getElementById('relationshipsList');
+            relationshipsList.innerHTML = '';
+            if (currentRequirements.keyData && currentRequirements.keyData.relationships && Array.isArray(currentRequirements.keyData.relationships)) {
+                currentRequirements.keyData.relationships.forEach(relationship => {
+                    const relationshipElement = relationshipTemplate.content.cloneNode(true);
+                    const relationshipNode = setupRelationshipListeners(relationshipElement);
+                    
+                    const sourceSelect = relationshipNode.querySelector('.source-entity');
+                    const targetSelect = relationshipNode.querySelector('.target-entity');
+                    const typeSelect = relationshipNode.querySelector('.relationship-type');
+                    const sourceField = relationshipNode.querySelector('.source-field');
+                    const targetField = relationshipNode.querySelector('.target-field');
+
+                    updateEntitySelects(relationshipNode);
+                    
+                    sourceSelect.value = relationship.sourceEntity || '';
+                    targetSelect.value = relationship.targetEntity || '';
+                    typeSelect.value = relationship.type || 'one-to-one';
+                    sourceField.value = relationship.sourceField || '';
+                    targetField.value = relationship.targetField || '';
+                    
+                    relationshipsList.appendChild(relationshipNode);
+                });
+            }
+
             updateJsonView();
+            updateEntityConfigsView();
         } catch (error) {
             console.error('Error updating UI:', error);
             showNotification('Error updating UI: ' + error.message, 'error');
@@ -778,6 +975,29 @@ if (typeof module !== 'undefined' && module.exports) {
         setTimeout(() => {
             notification.remove();
         }, 3000);
+    }
+
+    function normalizeKeyData(keyData) {
+        if (!keyData) {
+            return {
+                entities: [],
+                relationships: []
+            };
+        }
+
+        // If keyData is an array, it's the old format where keyData was just entities
+        if (Array.isArray(keyData)) {
+            return {
+                entities: keyData,
+                relationships: []
+            };
+        }
+
+        // Ensure both entities and relationships exist
+        return {
+            entities: keyData.entities || [],
+            relationships: keyData.relationships || []
+        };
     }
 
     // Initialize

@@ -19,7 +19,6 @@ class RecommendationsManager {
         // Show recommendations section when recommendations button is clicked
         this.recommendationsBtn.addEventListener('click', () => {
             this.recommendationsSection.classList.remove('hidden');
-            // Scroll to recommendations section
             this.recommendationsSection.scrollIntoView({ behavior: 'smooth' });
         });
 
@@ -30,6 +29,16 @@ class RecommendationsManager {
 
         // Generate recommendations when button is clicked
         this.generateRecommendationsBtn.addEventListener('click', () => this.generateRecommendations());
+
+        // Handle code generation button clicks using event delegation
+        this.recommendationsContainer.addEventListener('click', (event) => {
+            const generateCodeBtn = event.target.closest('.generate-code-btn');
+            if (generateCodeBtn) {
+                const type = generateCodeBtn.dataset.type;
+                const recommendation = JSON.parse(generateCodeBtn.dataset.recommendation);
+                this.generateCode(type, recommendation, event);
+            }
+        });
     }
 
     async generateRecommendations() {
@@ -133,7 +142,8 @@ class RecommendationsManager {
                                         <span class="px-3 py-1 bg-gray-50 rounded-md text-sm text-gray-600">${item.technology || 'Not specified'}</span>
                                     </div>
                                     <button class="generate-code-btn inline-flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors duration-200"
-                                            onclick="window.recommendationsManager.generateCode('${item.type.toLowerCase()}', ${JSON.stringify(item).replace(/"/g, '&quot;')})">
+                                            data-type="${item.type.toLowerCase()}"
+                                            data-recommendation='${JSON.stringify(item).replace(/'/g, "&apos;")}'>
                                         <i class="fas fa-code mr-2"></i>Generate Code
                                     </button>
                                 </div>
@@ -147,32 +157,69 @@ class RecommendationsManager {
         this.recommendationsContainer.innerHTML = recommendationsHtml;
     }
 
-    async generateCode(type, recommendation) {
+    async generateCode(type, recommendation, event) {
+        const button = event?.target?.closest('.generate-code-btn');
+        const originalText = button?.innerHTML || '';
+        
         try {
             // Show loading state
-            const button = event.target;
-            const originalText = button.innerHTML;
-            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating...';
-            button.disabled = true;
+            if (button) {
+                button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating...';
+                button.disabled = true;
+            }
 
-            const response = await fetch('/api/generate/requirements/code', {
+            const response = await fetch('http://127.0.0.1:11434/api/generate', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    type,
-                    recommendation,
-                    requirements: window.currentRequirements
+                    model: "llama2",
+                    prompt: `Generate HTML code for a ${type} with the following details:
+                    Title: ${recommendation.title}
+                    Description: ${recommendation.description}
+                    Features: ${recommendation.features?.join(', ') || 'None'}
+                    Technology: ${recommendation.technology || 'Not specified'}
+                    
+                    Requirements:
+                    ${JSON.stringify(window.currentRequirements, null, 2)}
+                    
+                    Please generate the code using jQuery, Tailwind CSS, and Font Awesome.`,
+                    stream: true
                 })
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to generate code');
+                const errorText = await response.text();
+                throw new Error(errorText || 'Failed to generate code');
             }
 
-            const data = await response.json();
+            // Handle streaming response
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let generatedCode = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                
+                const chunk = decoder.decode(value);
+                const lines = chunk.split('\n');
+                
+                for (const line of lines) {
+                    if (line.trim()) {
+                        try {
+                            const data = JSON.parse(line);
+                            if (data.response) {
+                                generatedCode += data.response;
+                            }
+                        } catch (e) {
+                            // Skip invalid JSON lines
+                            continue;
+                        }
+                    }
+                }
+            }
             
             // Create a modal to display the code
             const modal = document.createElement('div');
@@ -181,35 +228,72 @@ class RecommendationsManager {
                 <div class="bg-white rounded-lg p-8 max-w-4xl w-full max-h-[90vh] flex flex-col">
                     <div class="flex justify-between items-center mb-6">
                         <h2 class="text-2xl font-bold text-gray-800">Generated Code</h2>
-                        <button class="text-gray-500 hover:text-gray-700 transition-colors duration-200" onclick="this.parentElement.parentElement.parentElement.remove()">
+                        <button class="close-modal-btn text-gray-500 hover:text-gray-700 transition-colors duration-200">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
                     <div class="flex-1 overflow-y-auto pr-4">
                         <div class="bg-gray-50 p-4 rounded-lg">
-                            <pre class="whitespace-pre-wrap font-mono text-sm text-gray-800">${data.data.code}</pre>
+                            <pre class="whitespace-pre-wrap font-mono text-sm text-gray-800">${generatedCode}</pre>
                         </div>
                         <div class="mt-4 text-sm text-gray-600">
-                            <p class="mb-2"><strong>File Extension:</strong> ${data.data.extension}</p>
-                            <p><strong>Dependencies:</strong> ${data.data.dependencies?.join(', ') || 'None'}</p>
+                            <p class="mb-2"><strong>File Extension:</strong> .html</p>
+                            <p><strong>Dependencies:</strong> jquery, tailwindcss, font-awesome</p>
                         </div>
                     </div>
                     <div class="mt-6 flex justify-end space-x-4 pt-4 border-t">
-                        <button class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200" 
-                                onclick="navigator.clipboard.writeText(${JSON.stringify(data.data.code)})">
+                        <button class="copy-code-btn px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200">
                             <i class="fas fa-copy mr-2"></i>Copy Code
                         </button>
-                        <button class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200"
-                                onclick="this.parentElement.parentElement.parentElement.remove()">
+                        <button class="close-modal-btn px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200">
                             Close
                         </button>
                     </div>
                 </div>
             `;
+
+            // Add event listeners for modal buttons
+            const closeButtons = modal.querySelectorAll('.close-modal-btn');
+            closeButtons.forEach(btn => {
+                btn.addEventListener('click', () => modal.remove());
+            });
+
+            const copyButton = modal.querySelector('.copy-code-btn');
+            copyButton.addEventListener('click', () => {
+                navigator.clipboard.writeText(generatedCode);
+                copyButton.innerHTML = '<i class="fas fa-check mr-2"></i>Copied!';
+                setTimeout(() => {
+                    copyButton.innerHTML = '<i class="fas fa-copy mr-2"></i>Copy Code';
+                }, 2000);
+            });
+
             document.body.appendChild(modal);
         } catch (error) {
             console.error('Error generating code:', error);
-            alert(`Error generating code: ${error.message}`);
+            // Show error in a modal instead of alert
+            const errorModal = document.createElement('div');
+            errorModal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            errorModal.innerHTML = `
+                <div class="bg-white rounded-lg p-8 max-w-md w-full">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-red-600">Error</h2>
+                        <button class="close-modal-btn text-gray-500 hover:text-gray-700 transition-colors duration-200">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="text-gray-600 mb-6">
+                        <p>${error.message}</p>
+                    </div>
+                    <div class="flex justify-end">
+                        <button class="close-modal-btn px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            `;
+            const closeBtn = errorModal.querySelector('.close-modal-btn');
+            closeBtn.addEventListener('click', () => errorModal.remove());
+            document.body.appendChild(errorModal);
         } finally {
             // Restore button state
             if (button) {
